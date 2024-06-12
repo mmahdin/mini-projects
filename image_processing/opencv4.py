@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage import convolve
 
 
 def filter_2d_manual(image, kernel):
@@ -203,6 +204,125 @@ def apply_gaussian_derivatives_opencv(image, kernel_size=5,  sigma=0):
     plt.show()
 
 
+def gaussian_kernel(size, sigma=1):
+    kernel_1D = np.linspace(-(size // 2), size // 2, size)
+    for i in range(size):
+        kernel_1D[i] = (1 / (np.sqrt(2 * np.pi) * sigma)) * np.exp(-np.power((kernel_1D[i]) / sigma, 2) / 2)
+    kernel_2D = np.outer(kernel_1D.T, kernel_1D.T)
+    kernel_2D *= 1.0 / kernel_2D.max()
+    return kernel_2D
+
+def sobel_filters(img):
+    Gx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)
+    Gy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)
+    
+    magnitude = cv2.magnitude(Gx, Gy)
+    
+    Gx = cv2.normalize(Gx, None, 0, 255, cv2.NORM_MINMAX)
+    Gy = cv2.normalize(Gy, None, 0, 255, cv2.NORM_MINMAX)
+    magnitude = cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX)
+    
+    Gx = np.uint8(Gx)
+    Gy = np.uint8(Gy)
+    magnitude = np.uint8(magnitude)
+    theta = np.arctan2(Gy, Gx)
+    
+    return (magnitude, theta)
+
+def non_max_suppression(G, theta):
+    M, N = G.shape
+    Z = np.zeros((M, N), dtype=np.int32)
+    angle = theta * 180. / np.pi
+    angle[angle < 0] += 180
+
+    for i in range(1, M-1):
+        for j in range(1, N-1):
+            try:
+                q = 255
+                r = 255
+
+                # angle 0
+                if (0 <= angle[i, j] < 22.5) or (157.5 <= angle[i, j] <= 180):
+                    q = G[i, j + 1]
+                    r = G[i, j - 1]
+                # angle 45
+                elif (22.5 <= angle[i, j] < 67.5):
+                    q = G[i + 1, j - 1]
+                    r = G[i - 1, j + 1]
+                # angle 90
+                elif (67.5 <= angle[i, j] < 112.5):
+                    q = G[i + 1, j]
+                    r = G[i - 1, j]
+                # angle 135
+                elif (112.5 <= angle[i, j] < 157.5):
+                    q = G[i - 1, j - 1]
+                    r = G[i + 1, j + 1]
+
+                if (G[i, j] >= q) and (G[i, j] >= r):
+                    Z[i, j] = G[i, j]
+                else:
+                    Z[i, j] = 0
+
+            except IndexError as e:
+                pass
+
+    return Z
+
+def threshold(img, lowThresholdRatio=0.01, highThresholdRatio=0.06):
+    highThreshold = img.max() * highThresholdRatio
+    lowThreshold = highThreshold * lowThresholdRatio
+
+    M, N = img.shape
+    res = np.zeros((M, N), dtype=np.int32)
+
+    weak = np.int32(100)
+    strong = np.int32(200)
+
+    strong_i, strong_j = np.where(img >= highThreshold)
+    zeros_i, zeros_j = np.where(img < lowThreshold)
+
+    weak_i, weak_j = np.where((img <= highThreshold) & (img >= lowThreshold))
+
+    res[strong_i, strong_j] = strong
+    res[weak_i, weak_j] = weak
+
+    return (res, weak, strong)
+
+def hysteresis(img, weak, strong=255):
+    M, N = img.shape
+    for i in range(1, M-1):
+        for j in range(1, N-1):
+            if (img[i, j] == weak):
+                try:
+                    if ((img[i + 1, j - 1] == strong) or (img[i + 1, j] == strong) or (img[i + 1, j + 1] == strong)
+                            or (img[i, j - 1] == strong) or (img[i, j + 1] == strong)
+                            or (img[i - 1, j - 1] == strong) or (img[i - 1, j] == strong) or (img[i - 1, j + 1] == strong)):
+                        img[i, j] = strong
+                    else:
+                        img[i, j] = 0
+                except IndexError as e:
+                    pass
+    return img
+
+def canny_edge_detector(img, sigma=1, kernel_size=5, lowThresholdRatio=0.05, highThresholdRatio=0.09):
+    # Step 1: Gaussian Blur
+    kernel = gaussian_kernel(kernel_size, sigma)
+    img_smoothed = convolve(img, kernel)
+    img_smoothed = cv2.GaussianBlur(image, (kernel_size,kernel_size), sigma)
+
+    # Step 2: Sobel Filters
+    gradient_magnitude, gradient_angle = sobel_filters(img_smoothed)
+
+    # Step 3: Non-maximum suppression
+    img_nms = non_max_suppression(gradient_magnitude, gradient_angle)
+
+    # Step 4: Thresholding and Hysteresis
+    img_threshold, weak, strong = threshold(img_nms, lowThresholdRatio, highThresholdRatio)
+    img_final = hysteresis(img_threshold, weak, strong)
+
+    return img_final.astype(np.uint8)  # Ensure the image is of type uint8 for display
+
+
 # -------------------------------------------------------
 image_path = './imgs/diff2.png'
 image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -250,9 +370,14 @@ image_path = './imgs/gauss_deriv.png'
 image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 # smoothed_image = apply_gaussian_smoothing(image)
 # apply_gaussian_derivatives(smoothed_image)
-apply_gaussian_derivatives_opencv(image,  kernel_size=5,  sigma=3) # first apply gaussian and then derivate.
+# apply_gaussian_derivatives_opencv(image,  kernel_size=5,  sigma=3) # first apply gaussian and then derivate.
 
 
+# -------------------------------------------------------
+image_path = './imgs/canny.png'
+image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+edges = canny_edge_detector(image, sigma=1.5, kernel_size=5, lowThresholdRatio=0.2, highThresholdRatio=0.4)
+cv2.imshow('Canny Edge Detector', edges)
 
 
 
