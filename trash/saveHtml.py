@@ -3,7 +3,7 @@ import time
 import pyautogui
 
 # Open and read the file
-with open('fpga', 'r') as file:
+with open('ml', 'r') as file:
     lines = file.readlines()
 
 # Parse the file to extract (price, link) pairs

@@ -1,55 +1,21 @@
-import re
-from collections import Counter
-
-# Function to normalize words (strip non-alphabetic characters and make lowercase)
-def normalize(word):
-    return re.sub(r'[^a-zA-Z0-9_+-]', '', word).lower()
-
-# Step 1: Read the file
-file_path = '/home/mahdi/Documents/upwork/hw1/imgMlSkills'
-
-with open(file_path, 'r', encoding='utf-8') as file:
-    lines = file.readlines()
-
-# Step 2: Normalize and count the occurrences of each word or phrase
-normalized_phrases = [normalize(line.strip()) for line in lines]
-phrase_counter = Counter(normalized_phrases)
-
-# Step 3: Sort the counts in descending order
-sorted_phrases = sorted(phrase_counter.items(), key=lambda item: item[1], reverse=True)
-
-# Step 4: Write the sorted counts to a new file
-output_file_path = '/home/mahdi/Documents/upwork/hw1/imgMlSkillsCount'
-
-with open(output_file_path, 'w', encoding='utf-8') as output_file:
-    for phrase, count in sorted_phrases:
-        output_file.write(f'{phrase}, {count}\n')
-
-print(f'The word or phrase counts have been written to {output_file_path}')
+import matplotlib.pyplot as plt
 
 
-# Read the input file and split the columns
-with open(output_file_path, 'r') as file:
-    lines = file.readlines()
+x = [1,6,8,2,7,4,5,2]
+y = [2,3,4,5,5,6,7,8]
+labels = ['A1','A2','A3','A4', 'A5','A6','A7','A8']
 
-# Prepare two lists to hold the separate columns
-first_column = []
-second_column = []
+plt.scatter(x, y)
+for i, label in enumerate(labels):
+    plt.annotate(label, (x[i], y[i]), textcoords="offset points", xytext=(0,10), ha='center')
 
-# Split each line and append to the respective lists
-for line in lines:
-    if line.strip():  # Ignore empty lines
-        col1, col2 = line.strip().split(',')
-        first_column.append(col1.strip())
-        second_column.append(col2.strip())
+cx = [3.67, 7, 1.5]
+cy = [7, 4, 3.5]
 
-# Write the first column to a new file
-with open('/home/mahdi/Documents/upwork/hw1/imgMlSkillsCountFrs', 'w') as file:
-    for item in first_column:
-        file.write(f"{item}\n")
+for j in range(3):
+    print(f'Distance to C{j+1}')
+    for i in range(len(x)):
+        res = ((x[i]-cx[j])**2 + (y[i]-cy[j])**2)**0.5
+        print(f'A{i+1}: ', res)
 
-# Write the second column to a new file
-with open('/home/mahdi/Documents/upwork/hw1/imgMlSkillsCountsec', 'w') as file:
-    for item in second_column:
-        file.write(f"{item}\n")
-
+plt.show()

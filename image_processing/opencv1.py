@@ -15,12 +15,10 @@ def gamma_correction(image, gamma, c=1):
     
     return corrected_img
 
-
 def negative_image(image):
     # Subtract each pixel value from 255
     negative = 255 - image
     return negative
-
 
 def log_transform(image):
     # Convert the image to float32 to prevent overflow/underflow issues
@@ -33,7 +31,6 @@ def log_transform(image):
     # Convert back to uint8
     log_image = log_image.astype(np.uint8)
     return log_image
-
 
 def contrast_stretching(image, r1, s1, r2, s2):
     L = 256  # Assuming 8-bit grayscale image
@@ -58,7 +55,6 @@ def contrast_stretching(image, r1, s1, r2, s2):
     
     return stretched_image
 
-
 def plot_histogram(image):
     # Calculate the histogram for the image
     histogram = cv2.calcHist([image], [0], None, [256], [0, 256])
@@ -71,7 +67,6 @@ def plot_histogram(image):
     plt.plot(histogram)
     plt.xlim([0, 256])  # Set the x-axis range to [0, 256]
     plt.show()
-
 
 def plot_cumulative_histogram(image):
     # Calculate the histogram for the image
@@ -91,7 +86,6 @@ def plot_cumulative_histogram(image):
     plt.plot(cumulative_histogram, color='r')
     plt.xlim([0, 256])  # Set the x-axis range to [0, 256]
     plt.show()
-
 
 def histogram_equalization(image):
     # Apply histogram equalization using OpenCV
@@ -151,10 +145,19 @@ def plot_histograms(original_image, equalized_image):
     plt.tight_layout()
     plt.show()
 
-
 def plot_pyramid(image):
     smaller = cv2.pyrDown(image)
-    larger = cv2.pyrUp(image)
+    larger = cv2.pyrUp(if pixel <= r1:
+            return (s1 / r1) * pixel
+        elif pixel <= r2:
+            return ((s2 - s1) / (r2 - r1)) * (pixel - r1) + s1
+        else:
+            return ((L - 1 - s2) / (L - 1 - r2)) * (pixel - r2) + s2 pixel <= r1:
+            return (s1 / r1) * pixel
+        elif pixel <= r2:
+            return ((s2 - s1) / (r2 - r1)) * (pixel - r1) + s1
+        else:
+            return ((L - 1 - s2) / (L - 1 - r2)) * (pixel - r2) + s2)
 
     plt.figure(figsize=(12, 9))
 
@@ -223,3 +226,5 @@ plot_pyramid(image)
 # cv2.imshow("log", stretched_image)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
+

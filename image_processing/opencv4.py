@@ -324,26 +324,29 @@ def canny_edge_detector(img, sigma=1, kernel_size=5, lowThresholdRatio=0.05, hig
 
 
 # -------------------------------------------------------
-image_path = './imgs/diff2.png'
+image_path = './imgs/lion.png'
 image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 kernel_x = np.array([[-1, 0, 1],
                      [-2, 0, 2],
                      [-1, 0, 1]])
-# kernel_x = np.array([[-1, 1]])
-kernel_x = np.array([[0, 1],
-                     [-1, 0]])
+kernel_x = np.array([[-1, 1]])
+# kernel_x = np.array([[0, 1],
+#                      [-1, 0]])
 kernel_y = np.array([[-1, -2, -1],
                      [ 0,  0,  0],
                      [ 1,  2,  1]])
-# kernel_y = np.array([[1], [-1]])
-kernel_y = np.array([[1, 0],
-                     [0, -1]])
-image_dx = filter_2d_manual(image, kernel_x)
-image_dy = filter_2d_manual(image, kernel_y)
+kernel_y = np.array([[1], [-1]])
+kernel_y2 = np.array([[-1], [1]])
+# kernel_y = np.array([[1, 0],
+#                      [0, -1]])
+# image_dx = filter_2d_manual(image, kernel_x)
+# image_dy = filter_2d_manual(image, kernel_y)
+image_dx = cv2.filter2D(image, -1, kernel_y)
+image_dy = cv2.filter2D(image, -1, kernel_y2)
 
-# cv2.imshow('Original Image', image)
-# cv2.imshow('Differentiation in X axis', image_dx)
-# cv2.imshow('Differentiation in Y axis', image_dy)
+cv2.imshow('Original Image', image)
+cv2.imshow('Differentiation in X axis',image_dx)
+cv2.imshow('Differentiation in Y axis', image_dy)
 
 
 # -------------------------------------------------------
@@ -377,10 +380,7 @@ image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 image_path = './imgs/canny.png'
 image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 edges = canny_edge_detector(image, sigma=1.5, kernel_size=5, lowThresholdRatio=0.2, highThresholdRatio=0.4)
-cv2.imshow('Canny Edge Detector', edges)
-
-
-
+# cv2.imshow('Canny Edge Detector', edges)
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
