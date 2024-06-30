@@ -1,0 +1,91 @@
+
+Circuit: 
+
+Scale set
+Warning: Model issue on line 9072 :
+  .model nch.16 nmos ( lmin=1.8e-007 lmax=    4.99999999999999977e-07   wm ...
+unrecognized parameter (n) - ignored
+unrecognized parameter (tlev) - ignored
+unrecognized parameter (tlevc) - ignored
+unrecognized parameter (sfvtflag) - ignored
+Warning: Model issue on line 10080 :
+  .model pch.12 pmos ( lmin=1.8e-007 lmax=    4.99999999999999977e-07   wm ...
+unrecognized parameter (n) - ignored
+unrecognized parameter (tlev) - ignored
+unrecognized parameter (tlevc) - ignored
+unrecognized parameter (sfvtflag) - ignored
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        1.8
+1                                          1.8
+a                                          1.8
+ns                                 9.23236e-09
+nout                               3.69294e-08
+b                                          1.8
+s                                          1.8
+2                                  3.69294e-08
+3                                  1.84647e-08
+out                                        1.8
+vinb#branch                                  0
+vina#branch                                  0
+vins0#branch                                 0
+vdd#branch                        -4.01049e-11
+
+
+No. of Data Rows : 80036
+
+No .measure possible in batch mode (-b) with -r rawfile set!
+Remove rawfile and use .print or .plot or
+select interactive mode (optionally with .control section) instead.
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+No. of Data Columns : 15  
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        1.8
+1                                          1.8
+a                                          1.8
+ns                                 9.23236e-09
+nout                               3.69294e-08
+b                                          1.8
+s                                          1.8
+2                                  3.69294e-08
+3                                  1.84647e-08
+out                                        1.8
+vinb#branch                                  0
+vina#branch                                  0
+vins0#branch                                 0
+vdd#branch                        -4.01049e-11
+
+
+No. of Data Rows : 80036
+
+No .measure possible in batch mode (-b) with -r rawfile set!
+Remove rawfile and use .print or .plot or
+select interactive mode (optionally with .control section) instead.
+
+
+Total analysis time (seconds) = 3.328
+
+Total elapsed time (seconds) = 3.376 
+
+Total DRAM available = 15717.012 MB.
+DRAM currently available = 1313.730 MB.
+Total ngspice program size =   34.492 MB.
+Resident set size =   20.578 MB.
+Shared ngspice pages =    8.125 MB.
+Text (code) pages =    5.070 MB.
+Stack = 0 bytes.
+Library pages =   20.957 MB.
+

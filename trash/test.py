@@ -1,21 +1,33 @@
-import matplotlib.pyplot as plt
+import asyncio
+from asyncio.subprocess import PIPE
+import aiohttp
+
+async def get(url):
+    print("Start: %s" % url)
+    response = await aiohttp.request("GET", url)
+    print("Finish: %s" % url)
+    response.close()
+    return 1
+
+async def cmd(cmd):
+    print("Start: %s" % cmd)
+    proc = await asyncio.create_subprocess_shell(
+            cmd, stdin=None, stderr=None, stdout=PIPE)
+    print("Proc created: %s" % cmd)
+    out = await proc.stdout.read()
+    print("Finish: %s" % cmd)
+    return out
+
+async def run_all(url1, url2, shellcmd):
+    r1 = await get(url1)
+    r2 = await get(url2)
+    s1 = await cmd(shellcmd)
+    results = await asyncio.gather(r1, r2, s1)
+
+    for res in results:
+        print(res)
 
 
-x = [1,6,8,2,7,4,5,2]
-y = [2,3,4,5,5,6,7,8]
-labels = ['A1','A2','A3','A4', 'A5','A6','A7','A8']
-
-plt.scatter(x, y)
-for i, label in enumerate(labels):
-    plt.annotate(label, (x[i], y[i]), textcoords="offset points", xytext=(0,10), ha='center')
-
-cx = [3.67, 7, 1.5]
-cy = [7, 4, 3.5]
-
-for j in range(3):
-    print(f'Distance to C{j+1}')
-    for i in range(len(x)):
-        res = ((x[i]-cx[j])**2 + (y[i]-cy[j])**2)**0.5
-        print(f'A{i+1}: ', res)
-
-plt.show()
+loop = asyncio.get_event_loop()
+loop.run_until_complete(run_all("http://google.com.au", "http://google.com", "ls ~/"))
+loop.close()
