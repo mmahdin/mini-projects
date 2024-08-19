@@ -1,0 +1,12 @@
+print(58)  # H
+print(1000)  # T
+print(10)  # n
+print(1000)  # m
+sigma0_prime = 1
+print(sigma0_prime)  # sigma0_prime
+print(8-sigma0_prime)  # delta_sigma_prime
+print(0.65)  # Cc
+print(0.84)  # Cs
+print(1.47199)  # e0
+print(4.18)  # bk
+print(0.65)  # M

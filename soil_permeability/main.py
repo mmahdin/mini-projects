@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 
 class Simulateion:
@@ -7,7 +7,7 @@ class Simulateion:
     def __init__(self):
         self.cv = 0
         self.C = 0
-        self.rw = 9.81
+        self.rw = 0.001
 
         self.dz_list = []
         self.dz_list_up = []
@@ -16,52 +16,49 @@ class Simulateion:
         self.e_list_up = []
 
     def get_inputs(self):
-        self.H = input("enter H:")
-        self.T = input("enter T:")
-        self.n = input("enter n:")
-        self.m = input("enter m:")
-        self.sigma0_prime = input("enter sigma0_prime:")
-        self.delta_sigma_prime = input("enter delta_sigma_prime:")
-        self.CV_RI = input("enter CV(RI):")
-        self.CV_FA = input("enter CV(FA):")
-        self.Cc = input("enter Cc")
-        self.Cs = input("enter Cs")
-        self.e0 = input('enter e0')
-        self.bk = input('enter bk')
-        self.M = input('enter M:')
+        self.H = float(input("enter H:"))
+        self.T = int(input("enter T:"))
+        self.n = int(input("enter n:"))
+        self.m = int(input("enter m:"))
+        self.sigma0_prime = float(input("enter sigma0_prime:"))
+        self.delta_sigma_prime = float(input("enter delta_sigma_prime:"))
+        self.Cc = float(input("enter Cc"))
+        self.Cs = float(input("enter Cs"))
+        self.e0 = float(input('enter e0'))
+        self.bk = float(input('enter bk'))
+        self.M = float(input('enter M:'))
 
     def init_matrix(self):
-        self.list_u = np.zeros((self.n, self.m))
-        self.list_u[1:-1, 0] = self.delta_sigma_prime
-        a = self.calc_a(self.delta_z0, self.CV_RI)
-        cv = self.delta_sigma_prime
-        for j in range(1, self.n):
-            self.list_u[j, 1] = a*cv + a*cv + (1-a-a)*cv
-
-        # self.list_Cv = np.zeros((self.n, self.m))
-        # self.list_Cv[:, 0] = self.CV_RI
-
-        # self.list_sigma_prime = np.zeros((self.n, self.m))
-        # self.list_sigma_prime = self.sigma0_prime + self.delta_sigma_prime - self.list_u
-
         self.delta_z0 = self.H / self.n
-
         self.delta_t = self.T / self.m
 
+        self.CV_RI = 2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M)) * \
+            (self.sigma0_prime**(1-self.C/self.M)) / (self.rw*self.Cc)
+        self.CV_FA = 2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M)) * (
+            (self.sigma0_prime+self.delta_sigma_prime)**(1-self.C/self.M)) / (self.rw*self.Cc)
+
+        self.list_u = np.zeros((self.n, self.m))
+        self.list_u[1:-1, 0] = self.delta_sigma_prime
+        self.calc_c(1, 1)
+        cv = self.delta_sigma_prime
+        a = cv*self.delta_t / (self.delta_z0**2)
+        for j in range(1, self.n-1):
+            self.list_u[j, 1] = a*cv + a*cv + (1-a-a)*cv
+
         self.dz_list = [self.delta_z0 for _ in range(self.n)]
+        self.dz_list_up = self.dz_list
 
         self.e_list = [self.e0 for _ in range(self.n)]
 
     def run(self):
-        for j in range(1, self.m+1):
-            for i in range(1, self.n+1):
-                if self.sig_avg(i-1, j) >= self.sig_avg(i-1, j-1):
-                    self.C = self.Cc
-                else:
-                    self.C = self.Cs
-
+        for j in range(1, self.m-1):
+            for i in range(1, self.n-1):
+                # print('***********************')
+                # print(i, j)
+                # print(self.list_u)
+                self.calc_c(i, j)
                 self.calc_u(i, j)
-
+                # print('***********************')
             self.dz_list = self.dz_list_up
             self.dz_list_up = []
 
@@ -72,10 +69,13 @@ class Simulateion:
         return self.sigma0_prime + self.delta_sigma_prime - self.list_u[i, j]
 
     def sig_avg(self, i, j):
-        return self.calc_sigma_prime(i, j) + self.calc_sigma_prime(i, j)
+        # print('sig_avg', i, j)
+        return (self.calc_sigma_prime(i-1, j) + self.calc_sigma_prime(i, j))/2
 
     def calc_e(self, i, j):
-        sigp = self.calc_sigma_prime()
+        # print('calc_e', i, j)
+        if j == 0:
+            return self.e0
         avgp = self.sig_avg(i, j)
         avgn = self.sig_avg(i, j-1)
         en = self.e_list[i]
@@ -89,18 +89,27 @@ class Simulateion:
             return e
 
     def calc_dz(self, i, j):
+        # print('calc_dz', i, j)
         prev_dz = self.dz_list[i]
         ep = self.calc_e(i, j)
         en = self.calc_e(i, j-1)
         dz = prev_dz * (1 - (ep - en)/(1 + ep))
-        self.dz_list_up[i] = dz
+        self.dz_list_up.append(dz)
         return dz
 
     def calc_cv(self, i, j):
+        # print('calc_cv', i, j)
         sigma = self.sig_avg(i, j)
         return 2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M)) * (sigma**(1-self.C/self.M)) / (self.rw*self.Cc)
 
+    def calc_c(self, i, j):
+        if self.sig_avg(i-1, j) >= self.sig_avg(i-1, j-1):
+            self.C = self.Cc
+        else:
+            self.C = self.Cs
+
     def calc_a(self, i, j):
+        # print('calc_a', i, j)
         cv = self.calc_cv(i, j)
         dz = self.calc_dz(i, j)
         return cv*self.delta_t / (dz**2)
@@ -110,3 +119,90 @@ class Simulateion:
         ap = self.calc_a(i+1, j)
         self.list_u[i, j+1] = an*self.list_u[i-1, j] + ap * \
             self.list_u[i+1, j] + (1-an-ap)*self.list_u[i, j]
+
+    def URI_UFA(self, t, Cv, Hdr, INF):
+        s = 0
+        Tv = Cv * t / (Hdr**2)
+        for m in range(INF):
+            M = (2*m+1)*np.pi/2
+            s += 2*np.exp(-(M**2)*Tv)/(M**2)
+        return 1 - s
+
+    def calc_URI_UFA(self):
+        # print("calc URI UFA")
+        URI = list()
+        UFA = list()
+
+        t = [i*self.delta_t for i in range(self.m)]
+        for t_ in t:
+            URI.append(self.URI_UFA(t_, self.Cc, self.H/2, 10000))
+            UFA.append(self.URI_UFA(t_, self.Cs, self.H/2, 10000))
+
+        return URI, UFA, t
+
+    def calc_D(self, uri, ufa, unl):
+        startTime = 0
+        D = list()
+        for i in range(startTime, len(uri)):
+            D.append((unl[i] - uri[i]) / (ufa[i] - uri[i]))
+        return D
+
+    def calc_UNL(self):
+        # print("calc UNL")
+        UNL = []
+        for j in range(self.m):
+            sum = 0
+            for i in range(1, self.n):
+                sum += (self.list_u[i, j] + self.list_u[i-1, j])/2
+            UNL.append(1 - sum / (self.delta_sigma_prime * self.H))
+        return UNL
+
+    def plot(self):
+        # print('----- plot -----')
+        uri, ufa, t = self.calc_URI_UFA()
+        unl = self.calc_UNL()
+        D = self.calc_D(uri, ufa, unl)
+        TvRI = self.CV_RI * np.array(t) / self.H
+
+        plt.figure()
+        plt.plot(t, unl)
+        plt.title("Unl-t")
+        plt.xlabel('t')
+        plt.ylabel('Unl')
+        plt.show()
+
+        plt.figure()
+        plt.plot(t, uri)
+        plt.title("URI-t")
+        plt.xlabel('t')
+        plt.ylabel('URI')
+        plt.show()
+
+        plt.figure()
+        plt.plot(t, ufa)
+        plt.title("UFA-t")
+        plt.xlabel('t')
+        plt.ylabel('UFA')
+        plt.show()
+
+        plt.figure()
+        plt.plot(t, D)
+        plt.title("D-t")
+        plt.xlabel('t')
+        plt.ylabel('D')
+        plt.show()
+
+        plt.figure()
+        plt.plot(TvRI[1:], D[1:])
+        plt.title("D-TvRI")
+        plt.xlabel('TvRI')
+        plt.ylabel('D')
+        plt.show()
+
+
+if __name__ == "__main__":
+    sim = Simulateion()
+    sim.get_inputs()
+    sim.init_matrix()
+    sim.run()
+    sim.plot()
