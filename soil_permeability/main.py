@@ -45,10 +45,10 @@ class Simulateion:
         for j in range(1, self.n-1):
             self.list_u[j, 1] = a*cv + a*cv + (1-a-a)*cv
 
-        self.dz_list = [self.delta_z0 for _ in range(self.n)]
-        self.dz_list_up = self.dz_list
-
         self.e_list = [self.e0 for _ in range(self.n)]
+
+        self.list_delta_z = np.zeros_like(self.list_u)
+        self.list_delta_z[:, 0] = self.delta_z0
 
     def run(self):
         for j in range(1, self.m-1):
@@ -59,8 +59,6 @@ class Simulateion:
                 self.calc_c(i, j)
                 self.calc_u(i, j)
                 # print('***********************')
-            self.dz_list = self.dz_list_up
-            self.dz_list_up = []
 
             self.e_list = self.e_list_up
             self.e_list_up = []
@@ -90,11 +88,10 @@ class Simulateion:
 
     def calc_dz(self, i, j):
         # print('calc_dz', i, j)
-        prev_dz = self.dz_list[i]
         ep = self.calc_e(i, j)
         en = self.calc_e(i, j-1)
-        dz = prev_dz * (1 - (ep - en)/(1 + ep))
-        self.dz_list_up.append(dz)
+        dz = self.list_delta_z[i, j-1] * (1 - (ep - en)/(1 + ep))
+        self.list_delta_z[i, j] = dz
         return dz
 
     def calc_cv(self, i, j):
@@ -135,8 +132,8 @@ class Simulateion:
 
         t = [i*self.delta_t for i in range(self.m)]
         for t_ in t:
-            URI.append(self.URI_UFA(t_, self.Cc, self.H/2, 10000))
-            UFA.append(self.URI_UFA(t_, self.Cs, self.H/2, 10000))
+            URI.append(self.URI_UFA(t_, self.Cc, self.H/2, 1000))
+            UFA.append(self.URI_UFA(t_, self.Cs, self.H/2, 1000))
 
         return URI, UFA, t
 
@@ -153,40 +150,43 @@ class Simulateion:
         for j in range(self.m):
             sum = 0
             for i in range(1, self.n):
-                sum += (self.list_u[i, j] + self.list_u[i-1, j])/2
+                sum += self.list_u[i][j] * self.list_delta_z[i, j]
             UNL.append(1 - sum / (self.delta_sigma_prime * self.H))
+        print(UNL)
         return UNL
 
     def plot(self):
-        # print('----- plot -----')
+        print('\n----- plot -----')
+        print(self.delta_z0)
+        print(self.list_delta_z)
         uri, ufa, t = self.calc_URI_UFA()
         unl = self.calc_UNL()
         D = self.calc_D(uri, ufa, unl)
         TvRI = self.CV_RI * np.array(t) / self.H
 
         plt.figure()
-        plt.plot(t, unl)
+        plt.plot(t[:-1], unl[:-1])
         plt.title("Unl-t")
         plt.xlabel('t')
         plt.ylabel('Unl')
         plt.show()
 
         plt.figure()
-        plt.plot(t, uri)
+        plt.plot(t[:-1], uri[:-1])
         plt.title("URI-t")
         plt.xlabel('t')
         plt.ylabel('URI')
         plt.show()
 
         plt.figure()
-        plt.plot(t, ufa)
+        plt.plot(t[:-1], ufa[:-1])
         plt.title("UFA-t")
         plt.xlabel('t')
         plt.ylabel('UFA')
         plt.show()
 
         plt.figure()
-        plt.plot(t, D)
+        plt.plot(t[:-1], D[:-1])
         plt.title("D-t")
         plt.xlabel('t')
         plt.ylabel('D')
