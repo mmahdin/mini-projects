@@ -23,6 +23,15 @@ This project demonstrates how to scrape data from websites. Some examples includ
 1. **Navigate the Web Page**: Selenium is used to open the target web page.
 2. **Take a Screenshot**: A screenshot of the current page is taken using a Bash script.
 3. **Detect Next Page Button**: Using OpenCV, the script analyzes the screenshot to find the coordinates of the "Next Page" button.
-4. **Simulate Click**: `xdotool` is employed to simulate a mouse click on the detected coordinates, navigating to the next page.
+4. **Simulate Click**: xdotool is employed to simulate a mouse click on the detected coordinates, navigating to the next page.
 
+## Learn English with Ctrl+E
+This project automates the download of all posts from an account that teaches English through movie clips.
 
+#### Features
+- Downloads all posts. If your internet disconnects and the code stops, simply run it again. The download will resume from where it left off.
+- The script `randomPlay.sh` can be moved to `/usr/bin` and made executable using `chmod +x randomPlay.sh`.
+- Create a keyboard shortcut (e.g., Ctrl+E) in your system settings (Settings -> Keyboard -> View and Customize Shortcuts -> Customize Shortcuts) and set the command to `"randomPlay.sh"`.
+
+#### Usage
+When you press `Ctrl+E`, a video will open using VLC, allowing you to learn English in a fun and interactive way.
