@@ -15,6 +15,8 @@ class Simulateion:
         self.e_list = []
         self.e_list_up = []
 
+        self.file = open('temp', 'w')
+
     def get_inputs(self):
         self.H = float(input("enter H:"))
         self.T = int(input("enter T:"))
@@ -114,8 +116,9 @@ class Simulateion:
     def calc_u(self, i, j):
         an = self.calc_a(i-1, j)
         ap = self.calc_a(i+1, j)
-        self.list_u[i, j+1] = an*self.list_u[i-1, j] + ap * \
-            self.list_u[i+1, j] + (1-an-ap)*self.list_u[i, j]
+
+        self.list_u[i, j+1] = (an*self.list_u[i-1, j] + ap *
+                               self.list_u[i+1, j] + (1-an-ap)*self.list_u[i, j])/1
 
     def URI_UFA(self, t, Cv, Hdr, INF):
         s = 0
@@ -152,13 +155,11 @@ class Simulateion:
             for i in range(1, self.n):
                 sum += self.list_u[i][j] * self.list_delta_z[i, j]
             UNL.append(1 - sum / (self.delta_sigma_prime * self.H))
-        print(UNL)
         return UNL
 
     def plot(self):
         print('\n----- plot -----')
-        print(self.delta_z0)
-        print(self.list_delta_z)
+        print(self.list_u)
         uri, ufa, t = self.calc_URI_UFA()
         unl = self.calc_UNL()
         D = self.calc_D(uri, ufa, unl)
@@ -166,6 +167,8 @@ class Simulateion:
 
         plt.figure()
         plt.plot(t[:-1], unl[:-1])
+        plt.xscale('log')
+        plt.gca().invert_yaxis()
         plt.title("Unl-t")
         plt.xlabel('t')
         plt.ylabel('Unl')
@@ -173,6 +176,8 @@ class Simulateion:
 
         plt.figure()
         plt.plot(t[:-1], uri[:-1])
+        plt.xscale('log')
+        plt.gca().invert_yaxis()
         plt.title("URI-t")
         plt.xlabel('t')
         plt.ylabel('URI')
@@ -180,6 +185,8 @@ class Simulateion:
 
         plt.figure()
         plt.plot(t[:-1], ufa[:-1])
+        plt.xscale('log')
+        plt.gca().invert_yaxis()
         plt.title("UFA-t")
         plt.xlabel('t')
         plt.ylabel('UFA')
