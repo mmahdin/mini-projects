@@ -15,7 +15,7 @@ class Simulateion:
         self.e_list = []
         self.e_list_up = []
 
-        self.file = open('temp', 'w')
+        self.file = open('temp.txt', 'w')
 
     def get_inputs(self):
         self.H = float(input("enter H:"))
@@ -27,8 +27,9 @@ class Simulateion:
         self.Cc = float(input("enter Cc"))
         self.Cs = float(input("enter Cs"))
         self.e0 = float(input('enter e0'))
-        self.bk = float(input('enter bk'))
+        self.bk = float(eval(input('enter bk')))
         self.M = float(input('enter M:'))
+        print('***************', ' ', self.bk)
 
     def init_matrix(self):
         self.delta_z0 = self.H / self.n
@@ -53,24 +54,45 @@ class Simulateion:
         self.list_delta_z[:, 0] = self.delta_z0
 
     def run(self):
+        self.file.write('j: 0' + '\n')
+        for qq in self.list_u[:, 0]:
+            self.file.write(str(qq) + ', ')
+        self.file.write('\n')
+
+        self.file.write('j: 1' + '\n')
+        for qq in self.list_u[:, 1]:
+            self.file.write(str(qq) + ', ')
+        self.file.write('\n')
+
         for j in range(1, self.m-1):
-            for i in range(1, self.n-1):
-                # print('***********************')
-                # print(i, j)
-                # print(self.list_u)
+            for i in range(1, self.n-2):
                 self.calc_c(i, j)
+
+                self.file.write('i: ' + str(i) + '    j: ' + str(j) + '\n')
+
                 self.calc_u(i, j)
-                # print('***********************')
+
+                if np.isnan(self.list_u[i, j]):
+                    self.file.close()
+                    break
+            if np.isnan(self.list_u[i, j]):
+                break
+
+            for qq in self.list_u[:, j+1]:
+                self.file.write(str(qq) + ', ')
+            self.file.write('\n')
+            self.file.write('**********\n')
 
             self.e_list = self.e_list_up
             self.e_list_up = []
+        np.savetxt('dz', self.list_delta_z, fmt='%.2f', delimiter=',')
 
     def calc_sigma_prime(self, i, j):
         return self.sigma0_prime + self.delta_sigma_prime - self.list_u[i, j]
 
     def sig_avg(self, i, j):
         # print('sig_avg', i, j)
-        return (self.calc_sigma_prime(i-1, j) + self.calc_sigma_prime(i, j))/2
+        return (self.calc_sigma_prime(i+1, j) + self.calc_sigma_prime(i, j))/2
 
     def calc_e(self, i, j):
         # print('calc_e', i, j)
@@ -99,6 +121,18 @@ class Simulateion:
     def calc_cv(self, i, j):
         # print('calc_cv', i, j)
         sigma = self.sig_avg(i, j)
+        self.file.write(f"u[{i-1},{j}]: " +
+                        str(self.list_u[i-1, j]) + '  ***  ')
+        self.file.write(f"u[{i},{j}]: " + str(self.list_u[i, j]) + '  ***  ')
+        self.file.write("sigma: " + str(sigma) + '  ***')
+        self.file.write('pow: ' + str((1-self.C/self.M)) + '  ***  ')
+        self.file.write("sigma2pow: " +
+                        str((sigma**(1-self.C/self.M))) + '  ***  ')
+        self.file.write("div: " + str((self.rw*self.Cc)) + '  ***  ')
+        self.file.write(
+            "10pow: " + str(10**((self.e0-self.bk)/self.M)) + '  ***  ')
+        self.file.write("cv: " + str(2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M))
+                        * (sigma**(1-self.C/self.M)) / (self.rw*self.Cc)) + '  ***  ')
         return 2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M)) * (sigma**(1-self.C/self.M)) / (self.rw*self.Cc)
 
     def calc_c(self, i, j):
@@ -111,12 +145,13 @@ class Simulateion:
         # print('calc_a', i, j)
         cv = self.calc_cv(i, j)
         dz = self.calc_dz(i, j)
+        self.file.write('dz: ' + str(dz) + '  ***  ' + 'a: ' +
+                        str(cv*self.delta_t / (dz**2)) + '\n')
         return cv*self.delta_t / (dz**2)
 
     def calc_u(self, i, j):
         an = self.calc_a(i-1, j)
         ap = self.calc_a(i+1, j)
-
         self.list_u[i, j+1] = (an*self.list_u[i-1, j] + ap *
                                self.list_u[i+1, j] + (1-an-ap)*self.list_u[i, j])/1
 
