@@ -4,34 +4,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Translation Audio Player</title>
+    <title>Advanced Translation Audio Player</title>
     <!-- Link to external CSS -->
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-    <h1>Translation Audio Player</h1>
+    <h1>Advanced Translation Audio Player</h1>
 
     <!-- Sections go here -->
     <div class="section">
         <p class="sentence">This is an English sentence.</p>
         <p class="translation">این یک جمله انگلیسی است.</p>
-        <button onclick="playAudio('audio1')">Play Audio</button>
-        <audio id="audio1" src="audio1.mp3"></audio>
+
+        <!-- Audio player controls -->
+        <div class="audio-controls">
+            <button onclick="togglePlay('audio1', 'playButton1')">
+                <span id="playButton1">Play</span>
+            </button>
+            <span id="currentTime1">0:00</span> / <span id="duration1">0:00</span>
+        </div>
+
+        <!-- Progress bar -->
+        <input type="range" id="progressBar1" min="0" max="100" value="0" step="1"
+            onchange="seekAudio('audio1', this.value)" class="progress-bar">
+
+        <audio id="audio1" src="audio/1.mp3"></audio>
     </div>
 
     <div class="section">
         <p class="sentence">The cat is on the roof.</p>
         <p class="translation">گربه روی پشت بام است.</p>
-        <button onclick="playAudio('audio2')">Play Audio</button>
+
+        <!-- Audio player controls -->
+        <div class="audio-controls">
+            <button onclick="togglePlay('audio2', 'playButton2')">
+                <span id="playButton2">Play</span>
+            </button>
+            <span id="currentTime2">0:00</span> / <span id="duration2">0:00</span>
+        </div>
+
+        <!-- Progress bar -->
+        <input type="range" id="progressBar2" min="0" max="100" value="0" step="1"
+            onchange="seekAudio('audio2', this.value)" class="progress-bar">
+
         <audio id="audio2" src="audio2.mp3"></audio>
     </div>
 
     <div class="section">
         <p class="sentence">I like to read books.</p>
         <p class="translation">من دوست دارم کتاب بخوانم.</p>
-        <button onclick="playAudio('audio3')">Play Audio</button>
+
+        <!-- Audio player controls -->
+        <div class="audio-controls">
+            <button onclick="togglePlay('audio3', 'playButton3')">
+                <span id="playButton3">Play</span>
+            </button>
+            <span id="currentTime3">0:00</span> / <span id="duration3">0:00</span>
+        </div>
+
+        <!-- Progress bar -->
+        <input type="range" id="progressBar3" min="0" max="100" value="0" step="1"
+            onchange="seekAudio('audio3', this.value)" class="progress-bar">
+
         <audio id="audio3" src="audio3.mp3"></audio>
     </div>
 
