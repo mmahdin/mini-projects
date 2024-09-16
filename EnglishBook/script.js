@@ -5,11 +5,16 @@ function togglePlay(audioId, buttonId) {
 
   if (audioElement.paused) {
     audioElement.play();
-    playButton.textContent = "Pause";
+    playButton.textContent = "⏸"; // Change to pause icon
   } else {
     audioElement.pause();
-    playButton.textContent = "Play";
+    playButton.textContent = "▶️"; // Change to play icon
   }
+
+  // Reset to "Play" when audio ends
+  audioElement.onended = () => {
+    playButton.textContent = "▶️";
+  };
 }
 
 // Update progress bar and time display
