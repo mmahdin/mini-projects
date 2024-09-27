@@ -5,12 +5,12 @@ import yt_dlp
 
 # Define proxy settings
 proxies = {
-    'http': 'socks5://127.0.0.1:2080',
-    'https': 'socks5://127.0.0.1:2080'
+    'http': 'http://26.26.26.1:8080',
+    'https': 'http://26.26.26.1:80800'
 }
 
 # Define URL and headers for the request
-url = 'https://www.youtube.com/playlist?list=PLofp2YXfp7TZZ5c7HEChs0_wfEfewLDs7'
+url = 'https://www.youtube.com/playlist?list=PLn6x5AfnPjyaD55yuz8rSFcD2GvTIvGsy'
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 }
