@@ -30,7 +30,7 @@ def choose_p(list_p):
     if list_p != None:
         for p in list_p:
             try:
-                if 'Download' in p.get_text().split('Music')[1]:
+                if 'Download' in p.get_text() or 'Music' in p.get_text():
                     return p
             except:
                 pass
