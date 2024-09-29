@@ -10,17 +10,21 @@ import numpy as np
 import os
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+import requests
+from bs4 import BeautifulSoup
 
 
-class FileCreationHandler(FileSystemEventHandler):
-    def __init__(self, file_name, callback):
-        self.file_name = file_name
-        self.callback = callback
+class MultiFileCreationHandler(FileSystemEventHandler):
+    def __init__(self, file_callbacks):
+        # A dictionary that maps file names to their respective callback functions
+        self.file_callbacks = file_callbacks
 
     def on_created(self, event):
-        if event.src_path.endswith(self.file_name):
-            print(f"{self.file_name} detected!")
-            self.callback()
+        # Loop through all the files and check if the event matches any
+        for file_name, callback in self.file_callbacks.items():
+            if event.src_path.endswith(file_name):
+                print(f"'{file_name}' file detected!")
+                callback()  # Call the corresponding function
 
 
 def file_detected_action():
@@ -55,7 +59,7 @@ def imageProcessing(template_image_path='/home/mahdi/Documents/mini-projects/scr
     if loc[0].size > 0:
         top_left = (loc[1][0], loc[0][0])
         bottom_right = (top_left[0] + w, top_left[1] + h)
-        cropped_image = main_image[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
+        cropped_image = main_image[top_left[1]                                   :bottom_right[1], top_left[0]:bottom_right[0]]
         print(f"Shape of the cropped image: {cropped_image.shape}")
 
         center_x = top_left[0] + w // 2
@@ -92,11 +96,18 @@ def read_and_remove_first_line(file_path='/home/mahdi/Documents/mini-projects/sc
     return first_line
 
 
-def file_detected_action():
+def file_close_detected_action():
     driver.quit()
 
 
+def file_download_detected_action():
+    global url
+    with open('/home/mahdi/Documents/mini-projects/scrape/playmusic/liked_music', 'a') as file:
+        file.write(url + '\n')
+
+
 def play():
+    global url
     url = read_and_remove_first_line()
     driver.get(url)
     time.sleep(2)
@@ -119,25 +130,26 @@ def play():
 
     #####################################################################################
     path = '/home/mahdi/play_music/'
-    file_name = 'close'
+    file_callbacks = {
+        'close': file_close_detected_action,
+        'like': file_download_detected_action
+    }
 
-    event_handler = FileCreationHandler(file_name, file_detected_action)
+    # Create an event handler for detecting multiple files
+    event_handler = MultiFileCreationHandler(file_callbacks)
+
     observer = Observer()
+    # Monitor only the specified directory
     observer.schedule(event_handler, path, recursive=False)
     observer.start()
 
     try:
+        # Keep the observer running
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        observer.stop()
-
+        observer.stop()  # Gracefully stop the observer
     observer.join()
-    # while True:
-    #     time.sleep(2)
-    #     if os.path.exists('/home/mahdi/play_music/close'):
-    #         os.remove('/home/mahdi/play_music/close')
-    #         driver.quit()
 
 
 chrome_options = Options()
@@ -149,4 +161,5 @@ chrome_driver_path = '/home/mahdi/app/chromedriver-linux64/chromedriver'
 service = Service(chrome_driver_path)
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
+url = ''
 play()
