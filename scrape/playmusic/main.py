@@ -107,6 +107,9 @@ def file_download_detected_action():
 
 
 def play():
+    with open('/home/mahdi/play_music/close', 'w') as file:
+        pass
+    os.remove('/home/mahdi/play_music/close')
     global url
     url = read_and_remove_first_line()
     driver.get(url)
