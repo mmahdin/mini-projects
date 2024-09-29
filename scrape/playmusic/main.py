@@ -8,6 +8,23 @@ import time
 import cv2
 import numpy as np
 import os
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+
+class FileCreationHandler(FileSystemEventHandler):
+    def __init__(self, file_name, callback):
+        self.file_name = file_name
+        self.callback = callback
+
+    def on_created(self, event):
+        if event.src_path.endswith(self.file_name):
+            print(f"{self.file_name} detected!")
+            self.callback()
+
+
+def file_detected_action():
+    driver.quit()
 
 
 def imageProcessing(template_image_path='/home/mahdi/Documents/mini-projects/scrape/playmusic/sub.png'):
@@ -60,16 +77,6 @@ def imageProcessing(template_image_path='/home/mahdi/Documents/mini-projects/scr
         print("Template not found in the main image.")
 
 
-chrome_options = Options()
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--window-size=1850,1050")
-
-chrome_driver_path = '/home/mahdi/app/chromedriver-linux64/chromedriver'
-
-service = Service(chrome_driver_path)
-driver = webdriver.Chrome(service=service, options=chrome_options)
-
-
 def read_and_remove_first_line(file_path='/home/mahdi/Documents/mini-projects/scrape/playmusic/musicList.txt'):
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -85,9 +92,11 @@ def read_and_remove_first_line(file_path='/home/mahdi/Documents/mini-projects/sc
     return first_line
 
 
+def file_detected_action():
+    driver.quit()
+
+
 def play():
-    with open('/home/mahdi/play_music/close', 'w') as file:
-        pass
     url = read_and_remove_first_line()
     driver.get(url)
     time.sleep(2)
@@ -107,10 +116,37 @@ def play():
 
     actions = ActionChains(driver)
     actions.move_by_offset(x, y).click().perform()
-    while True:
-        if os.path.exists('/home/mahdi/play_music/close'):
-            os.remove('/home/mahdi/play_music/close')
-            driver.quit()
 
+    #####################################################################################
+    path = '/home/mahdi/play_music/'
+    file_name = 'close'
+
+    event_handler = FileCreationHandler(file_name, file_detected_action)
+    observer = Observer()
+    observer.schedule(event_handler, path, recursive=False)
+    observer.start()
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+
+    observer.join()
+    # while True:
+    #     time.sleep(2)
+    #     if os.path.exists('/home/mahdi/play_music/close'):
+    #         os.remove('/home/mahdi/play_music/close')
+    #         driver.quit()
+
+
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--window-size=1850,1050")
+
+chrome_driver_path = '/home/mahdi/app/chromedriver-linux64/chromedriver'
+
+service = Service(chrome_driver_path)
+driver = webdriver.Chrome(service=service, options=chrome_options)
 
 play()
