@@ -12,6 +12,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import requests
 from bs4 import BeautifulSoup
+import sys
 
 
 class MultiFileCreationHandler(FileSystemEventHandler):
@@ -59,7 +60,8 @@ def imageProcessing(template_image_path='/home/mahdi/Documents/mini-projects/scr
     if loc[0].size > 0:
         top_left = (loc[1][0], loc[0][0])
         bottom_right = (top_left[0] + w, top_left[1] + h)
-        cropped_image = main_image[top_left[1]                                   :bottom_right[1], top_left[0]:bottom_right[0]]
+        cropped_image = main_image[top_left[1]
+            :bottom_right[1], top_left[0]:bottom_right[0]]
         print(f"Shape of the cropped image: {cropped_image.shape}")
 
         center_x = top_left[0] + w // 2
@@ -98,6 +100,7 @@ def read_and_remove_first_line(file_path='/home/mahdi/Documents/mini-projects/sc
 
 def file_close_detected_action():
     driver.quit()
+    sys.exit(0)
 
 
 def file_download_detected_action():
@@ -111,7 +114,6 @@ def play():
         pass
     os.remove('/home/mahdi/play_music/close')
     global url
-    url = read_and_remove_first_line()
     driver.get(url)
     time.sleep(2)
 
@@ -158,11 +160,17 @@ def play():
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--window-size=1850,1050")
-
+chrome_options.add_argument("--disable-ads")
 chrome_driver_path = '/home/mahdi/app/chromedriver-linux64/chromedriver'
-
 service = Service(chrome_driver_path)
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
-url = ''
+# fox_driver_path = '/usr/local/bin/geckodriver'
+# service = Service(fox_driver_path)
+# options = webdriver.FirefoxOptions()
+# # options.add_argument('--headless')
+# driver = webdriver.Firefox(service=service, options=options)
+
+
+url = read_and_remove_first_line()
 play()

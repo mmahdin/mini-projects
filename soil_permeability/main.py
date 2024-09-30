@@ -7,7 +7,7 @@ class Simulateion:
     def __init__(self):
         self.cv = 0
         self.C = 0
-        self.rw = 0.001
+        self.rw = 9.8
 
         self.dz_list = []
         self.dz_list_up = []
@@ -41,7 +41,7 @@ class Simulateion:
             (self.sigma0_prime+self.delta_sigma_prime)**(1-self.C/self.M)) / (self.rw*self.Cc)
 
         self.list_u = np.zeros((self.n, self.m))
-        self.list_u[1:-1, 0] = self.delta_sigma_prime
+        self.list_u[1:, 0] = self.delta_sigma_prime
         self.calc_c(1, 1)
         cv = self.delta_sigma_prime
         a = cv*self.delta_t / (self.delta_z0**2)

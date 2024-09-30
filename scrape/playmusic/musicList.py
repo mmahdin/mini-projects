@@ -14,8 +14,8 @@ def get_search_items(search_terms, file_name, url):
 
 
 # Define the search list
-search_terms = ['melani', 'kimia', 'mehdi jahani', 'diana', 'Parastoo', 'satin',
-                'baran', 'shery m', 'ستین', 'از باران', 'پرستو', 'دیانا', 'شری ام', 'کیمیا', 'ملانی']
+search_terms = [' melani ', ' kimia ', ' mehdi jahani ', ' diana ', ' Parastoo ', ' satin ',
+                ' baran ', ' shery m ', ' ستین ', ' از باران', ' پرستو ', ' دیانا ', ' شری ام ', ' کیمیا ', ' ملانی ']
 file_names = ['/home/mahdi/Documents/mini-projects/scrape/playmusic/music-doni.txt',
               '/home/mahdi/Documents/mini-projects/scrape/playmusic/show-music.txt']
 urls = ['https://music-doni.ir/', 'https://show-music.ir/']
