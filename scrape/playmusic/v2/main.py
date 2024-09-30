@@ -1,13 +1,12 @@
 import requests
-from pydub.playback import play
 from io import BytesIO
 import os
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import requests
 import sys
 import time
 import pygame
+from bs4 import BeautifulSoup
 
 
 class MultiFileCreationHandler(FileSystemEventHandler):
@@ -84,11 +83,24 @@ def file_download_detected_action():
         file.write(url + '\n')
 
 
+def audio_link(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        pakh = soup.find_all('div', {'class': 'pakh'})[0]
+        audio = pakh.find_all('div', {'class': 'audio'})[0]
+        audio_tag = audio.find('audio')
+        link = audio_tag['src']
+        return link
+
+
 def run():
     with open('/home/mahdi/play_music/close', 'w') as file:
         pass
     os.remove('/home/mahdi/play_music/close')
     global url
+    link = audio_link(url)
+    print(link)
 
     path = '/home/mahdi/play_music/'
     file_callbacks = {
@@ -103,7 +115,7 @@ def run():
     observer.schedule(event_handler, path, recursive=False)
     observer.start()
 
-    player.play_stream_from_url(url)
+    player.play_stream_from_url(link)
 
     try:
         # Keep the observer running
@@ -116,5 +128,4 @@ def run():
 
 player = AudioPlayer()
 url = read_and_remove_first_line()
-url = "https://xx.music-doni.ir/archive/p/parastoo/archive/Parastoo-Asheghooneh%20128.mp3"
 run()
