@@ -45,7 +45,7 @@ class Simulateion:
         self.calc_c(1, 1)
         cv = self.delta_sigma_prime
         a = cv*self.delta_t / (self.delta_z0**2)
-        for j in range(1, self.n-1):
+        for j in range(1, self.n):
             self.list_u[j, 1] = a*cv + a*cv + (1-a-a)*cv
 
         self.e_list = [self.e0 for _ in range(self.n)]
@@ -85,7 +85,7 @@ class Simulateion:
 
             self.e_list = self.e_list_up
             self.e_list_up = []
-        np.savetxt('dz', self.list_delta_z, fmt='%.2f', delimiter=',')
+        # np.savetxt('dz', self.list_delta_z, fmt='%.2f', delimiter=',')
 
     def calc_sigma_prime(self, i, j):
         return self.sigma0_prime + self.delta_sigma_prime - self.list_u[i, j]
@@ -121,9 +121,9 @@ class Simulateion:
     def calc_cv(self, i, j):
         # print('calc_cv', i, j)
         sigma = self.sig_avg(i, j)
-        self.file.write(f"u[{i-1},{j}]: " +
+        self.file.write(f"u[{i},{j}]: " +
                         str(self.list_u[i-1, j]) + '  ***  ')
-        self.file.write(f"u[{i},{j}]: " + str(self.list_u[i, j]) + '  ***  ')
+        self.file.write(f"u[{i+1},{j}]: " + str(self.list_u[i, j]) + '  ***  ')
         self.file.write("sigma: " + str(sigma) + '  ***')
         self.file.write('pow: ' + str((1-self.C/self.M)) + '  ***  ')
         self.file.write("sigma2pow: " +
@@ -153,7 +153,7 @@ class Simulateion:
         an = self.calc_a(i-1, j)
         ap = self.calc_a(i+1, j)
         self.list_u[i, j+1] = (an*self.list_u[i-1, j] + ap *
-                               self.list_u[i+1, j] + (1-an-ap)*self.list_u[i, j])/1
+                               self.list_u[i+1, j] + (1-an-ap)*self.list_u[i, j])
 
     def URI_UFA(self, t, Cv, Hdr, INF):
         s = 0

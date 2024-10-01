@@ -14,14 +14,16 @@ def get_search_items(search_terms, file_name, url):
 
 
 # Define the search list
-search_terms = [' melani ', ' kimia ', ' mehdi jahani ', ' diana ', ' Parastoo ', ' satin ',
-                ' baran ', ' shery m ', ' ستین ', ' از باران', ' پرستو ', ' دیانا ', ' شری ام ', ' کیمیا ', ' ملانی ']
+search_terms = [' melani ', ' kimia ', ' mehdi jahani ', ' diana ', ' parastoo ', ' satin ', 'masoud sadeghloo', 'ramyar', 'hamid askari', 'mehdi ahmadvand', 'mohsen yeganeh', 'mohsen lorestani', 'ebi', 'dariush', 'siavash ghomayshi', 'moein', 'hayedeh', 'mahasti', 'fataneh', 'googoosh', 'leila forouhar', 'andy', 'mohsen chavoshi', 'asraei', 'benyamin'
+                ' baran ', ' shery m ', ' ستین ', ' از باران', ' پرستو ', ' دیانا ', ' شری ام ', ' کیمیا ', ' ملانی ', 'مسعود صادقلو', 'رامیار', 'حمید عسکری', 'مهدی احمدوند', 'محسن یگانه', 'محسن لرستانی', 'ابی', 'داریوش', 'سیاوش قمیشی', 'معین', 'هایده', 'مهستی', 'فتانه', 'گوگوش', 'لیلا فروهر', 'اندی', 'چاوشی', 'فریدون', 'بینامین']
 file_names = ['/home/mahdi/Documents/mini-projects/scrape/playmusic/music-doni.txt',
-              '/home/mahdi/Documents/mini-projects/scrape/playmusic/show-music.txt']
-urls = ['https://music-doni.ir/', 'https://show-music.ir/']
+              '/home/mahdi/Documents/mini-projects/scrape/playmusic/show-music.txt',
+              '/home/mahdi/Documents/mini-projects/scrape/playmusic/sahand-music.txt']
+urls = ['https://music-doni.ir/',
+        'https://show-music.ir/', 'https://sahand-music.ir/']
 
 res = get_search_items(
-    search_terms, file_names[0], urls[0]) + get_search_items(search_terms, file_names[1], urls[1])
+    search_terms, file_names[0], urls[0]) + get_search_items(search_terms, file_names[1], urls[1]) + get_search_items(search_terms, file_names[2], urls[2])
 
 random.shuffle(res)
 random.shuffle(res)
