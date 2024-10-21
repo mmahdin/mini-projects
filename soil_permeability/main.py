@@ -121,18 +121,18 @@ class Simulateion:
     def calc_cv(self, i, j):
         # print('calc_cv', i, j)
         sigma = self.sig_avg(i, j)
-        self.file.write(f"u[{i},{j}]: " +
-                        str(self.list_u[i-1, j]) + '  ***  ')
-        self.file.write(f"u[{i+1},{j}]: " + str(self.list_u[i, j]) + '  ***  ')
-        self.file.write("sigma: " + str(sigma) + '  ***')
-        self.file.write('pow: ' + str((1-self.C/self.M)) + '  ***  ')
-        self.file.write("sigma2pow: " +
-                        str((sigma**(1-self.C/self.M))) + '  ***  ')
-        self.file.write("div: " + str((self.rw*self.Cc)) + '  ***  ')
-        self.file.write(
-            "10pow: " + str(10**((self.e0-self.bk)/self.M)) + '  ***  ')
-        self.file.write("cv: " + str(2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M))
-                        * (sigma**(1-self.C/self.M)) / (self.rw*self.Cc)) + '  ***  ')
+        # self.file.write(f"u[{i},{j}]: " +
+        #                 str(self.list_u[i-1, j]) + '  ***  ')
+        # self.file.write(f"u[{i+1},{j}]: " + str(self.list_u[i, j]) + '  ***  ')
+        # self.file.write("sigma: " + str(sigma) + '  ***')
+        # self.file.write('pow: ' + str((1-self.C/self.M)) + '  ***  ')
+        # self.file.write("sigma2pow: " +
+        #                 str((sigma**(1-self.C/self.M))) + '  ***  ')
+        # self.file.write("div: " + str((self.rw*self.Cc)) + '  ***  ')
+        # self.file.write(
+        #     "10pow: " + str(10**((self.e0-self.bk)/self.M)) + '  ***  ')
+        # self.file.write("cv: " + str(2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M))
+        #                 * (sigma**(1-self.C/self.M)) / (self.rw*self.Cc)) + '  ***  ')
         return 2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M)) * (sigma**(1-self.C/self.M)) / (self.rw*self.Cc)
 
     def calc_c(self, i, j):
@@ -145,8 +145,8 @@ class Simulateion:
         # print('calc_a', i, j)
         cv = self.calc_cv(i, j)
         dz = self.calc_dz(i, j)
-        self.file.write('dz: ' + str(dz) + '  ***  ' + 'a: ' +
-                        str(cv*self.delta_t / (dz**2)) + '\n')
+        # self.file.write('dz: ' + str(dz) + '  ***  ' + 'a: ' +
+        #                 str(cv*self.delta_t / (dz**2)) + '\n')
         return cv*self.delta_t / (dz**2)
 
     def calc_u(self, i, j):
@@ -191,6 +191,9 @@ class Simulateion:
                 sum += self.list_u[i][j] * self.list_delta_z[i, j]
             UNL.append(1 - sum / (self.delta_sigma_prime * self.H))
         return UNL
+
+    def fit_URI(self):
+        pass
 
     def plot(self):
         print('\n----- plot -----')
