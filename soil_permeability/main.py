@@ -29,6 +29,7 @@ class Simulateion:
         self.e0 = float(input('enter e0'))
         self.bk = float(eval(input('enter bk')))
         self.M = float(input('enter M:'))
+        self.sigma_c = float(input('enter sigma_c'))
         print('***************', ' ', self.bk)
 
     def init_matrix(self):
@@ -101,6 +102,7 @@ class Simulateion:
         avgp = self.sig_avg(i, j)
         avgn = self.sig_avg(i, j-1)
         en = self.e_list[i]
+        # if avgp <= self.sigma_c:
         if avgp >= avgn:
             e = en - self.Cc * np.log10(avgp/avgn)
             self.e_list_up.append(e)
@@ -137,6 +139,7 @@ class Simulateion:
 
     def calc_c(self, i, j):
         if self.sig_avg(i-1, j) >= self.sig_avg(i-1, j-1):
+            # if self.sig_avg(i-1, j) <= self.sigma_c:
             self.C = self.Cc
         else:
             self.C = self.Cs
@@ -168,7 +171,7 @@ class Simulateion:
         URI = list()
         UFA = list()
 
-        t = [i*self.delta_t for i in range(self.m)]
+        t = [i*self.delta_t*160 for i in range(self.m)]
         for t_ in t:
             URI.append(self.URI_UFA(t_, self.Cc, self.H/2, 1000))
             UFA.append(self.URI_UFA(t_, self.Cs, self.H/2, 1000))
