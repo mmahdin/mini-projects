@@ -11,18 +11,23 @@ class Base():
         # Get Input
         self.H = float(input('enter H\n'))
         self.T = eval(input('enter T\n'))
-        self.q = float(input('q \n'))
         self.n = int(input('enter n\n'))
         self.m = int(eval(input('enter m\n')))
-        self.lambda_prime = float(input('enter landa prim\n'))
-        self.Ccn = float(input('enter Ccn\n'))
-        self.Ck = float(input('enter Ck\n'))
-        self.Ccr = float(input('enter Ccr\n'))
-        self.Kve = float(input('enter Kv\n'))
-        self.sigma_prime_e = float(input('enter sigma prime e\n'))
-        self.k1 = float(input('enter K1\n'))
-        self.K2 = float(input('enter K2\n'))
-        self.ee = float(input('enter ee\n'))
+        self.sigma0_prime = float(input('enter sigma 0 prime:\n'))
+        self.q = float(input('q \n'))  # delta sigma
+        self.Ccn = float(input('enter Ccn\n'))  # cc
+        self.Ccr = float(input('enter Ccr\n'))  # cs
+        self.e0 = float(input('enter e0:\n'))
+        self.kv0 = float(eval(input('enter kv0: \n')))
+        self.Ck = float(input('enter Ck\n'))  # M
+        self.sigma_c_prime = float(input('enter sigma c prime:\n'))
+        self.mv0 = float(input('enter mv0:\n'))
+        print(self.kv0)
+        # self.Kve = float(input('enter Kv\n'))
+        # self.sigma_prime_e = float(input('enter sigma prime e\n'))
+        # self.k1 = float(input('enter K1\n'))
+        # self.K2 = float(input('enter K2\n'))
+        # self.ee = float(input('enter ee\n'))
         # Other Data
         self.delta_z = self.H / self.n
 
@@ -30,35 +35,31 @@ class Base():
 
         # self.alpha = 1 - (self.Cc / self.M)
 
-        self.rw = 9.81
+        self.rw = 0.001
 
         # Initialization The Array
         # np.zeros(self.n + 1)
         self.list_sigma_prime = np.zeros((self.n + 1, self.m + 1))
         for i in range(1, self.n+2):
             self.list_sigma_prime[i -
-                                  1][0] = self.lambda_prime * self.delta_z * i
+                                  1][0] = self.sigma0_prime
 
         self.list_sigma_y = np.zeros((self.n + 1, 1))
         for i in range(self.n+1):
-            self.list_sigma_y[i][0] = self.k1 * \
-                self.list_sigma_prime[i][0] + self.K2
+            self.list_sigma_y[i][0] = self.sigma_c_prime
 
-        self.list_e_0 = np.zeros((self.n + 1, 1))
-        for i in range(self.n+1):
-            self.list_e_0[i][0] = self.ee + self.Ccn * \
-                np.log10(self.sigma_prime_e / self.list_sigma_prime[i][0])
+        # self.list_e_0 = np.zeros((self.n + 1, 1))
+        # for i in range(self.n+1):
+        #     self.list_e_0[i][0] = self.ee + self.Ccn * \
+        #         np.log10(self.sigma_prime_e / self.list_sigma_prime[i][0])
 
         self.list_k_v = np.zeros((self.n + 1, self.m + 1))
         for i in range(self.n+1):
-            self.list_k_v[i][0] = self.Kve * \
-                10**((self.list_e_0[i][0] - self.ee) / self.Ck)
+            self.list_k_v[i][0] = self.kv0
 
         self.list_m_v = np.zeros((self.n + 1, self.m + 1))
         for i in range(self.n+1):
-            self.list_m_v[i][0] = self.Ccn / \
-                ((1 + self.list_e_0[i][0]) *
-                 self.list_sigma_prime[i][0] * np.log(10))
+            self.list_m_v[i][0] = self.mv0
 
         self.list_c_v = np.zeros((self.n + 1, self.m + 1))
 
@@ -81,7 +82,7 @@ class Base():
 
                 self.list_sigma_prime[i][j-1] = self.list_sigma_prime[i][0] + \
                     self.q - self.list_u[i][j-1]
-                if self.list_sigma_prime[i][j-1] <= self.list_sigma_y[i][0]:
+                if self.list_sigma_prime[i][j-1] <= self.sigma_c_prime:
                     self.list_m_v[i][j] = self.list_m_v[i][0] * \
                         (self.list_sigma_prime[i][0] /
                          self.list_sigma_prime[i][j-1])
@@ -91,8 +92,8 @@ class Base():
                 else:
                     self.list_m_v[i][j] = (self.Ccr / self.Ccn) * self.list_m_v[i][0] * (
                         self.list_sigma_prime[i][0] / self.list_sigma_prime[i][j-1])
-                    self.list_k_v[i][j] = self.list_k_v[i][0] * ((self.list_sigma_prime[i][0] / self.list_sigma_y[i][0]) ** (
-                        self.Ccn / self.Ck)) * (self.list_sigma_y[i][0] / self.list_sigma_prime[i][j-1]) ** (self.Ccr / self.Ck)
+                    self.list_k_v[i][j] = self.list_k_v[i][0] * ((self.list_sigma_prime[i][0] / self.sigma_c_prime) ** (
+                        self.Ccn / self.Ck)) * (self.sigma_c_prime / self.list_sigma_prime[i][j-1]) ** (self.Ccr / self.Ck)
 
                 self.list_c_v[i][j] = self.list_k_v[i][j] / \
                     (self.list_m_v[i][j] * self.rw)
