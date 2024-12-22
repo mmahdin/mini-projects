@@ -148,6 +148,7 @@ for line in lines:
 
 # Count signal occurrences
 signal_counts = Counter(signals)
+print(len(signal_counts))
 
 # Display the top N most common signals
 top_n = 20  # Number of top signals to display

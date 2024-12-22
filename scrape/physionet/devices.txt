@@ -1,0 +1,312 @@
+Page link: https://physionet.org//content/adfecgdb/
+Description: This page refers to the ADFECGDB database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/perg-ioba-dataset/
+Description: This page refers to the PERG-IOBA dataset which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/aftdb/
+Description: This page refers to the AFTDB database which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ahadb/
+Description: This page refers to the AHA database which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ecg-arrhythmia/
+Description: This page refers to the ECG Arrhythmia database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/multi-gait-posture/
+Description: This page refers to a multi-gait posture dataset which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/multimodal-satellite-data/
+Description: This page refers to multimodal satellite data and does not include information about ECG devices.
+Page link: https://physionet.org//content/aami-ec13/
+Description: This page refers to the AAMI EC13 standard and does not describe a specific ECG device used to collect data.
+Page link: https://physionet.org//content/apnea-ecg/
+Description: This page refers to the Apnea-ECG database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/pmd/
+Description: This page refers to the PMD dataset, which does not include any information about ECG devices.
+Page link: https://physionet.org//content/auditory-eeg/
+Description: This page refers to an auditory EEG dataset and does not include information about ECG devices.
+Page link: https://physionet.org//content/autonomic-aging-cardiovascular/
+Description: This page refers to an autonomic aging cardiovascular study, but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/wearable-exam-stress/
+Description: This page refers to a study using wearable sensors for stress detection, but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/propofol-anesthesia-dynamics/
+Description: This page refers to a study on propofol anesthesia dynamics but does not include any information on ECG devices.
+Page link: https://physionet.org//content/chfdb/
+Description: This page refers to the Congestive Heart Failure Database (CHFDB) but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/bidmc/
+Description: This page refers to the BIDMC database, which does not include information on ECG devices.
+Page link: https://physionet.org//content/big-ideas-glycemic-wearable/
+Description: This page refers to a study on glycemic monitoring with wearable sensors, and does not include information on ECG devices.
+Page link: https://physionet.org//content/bpssrat/
+Description: This page refers to the BPSSRAT database which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/body-sway-music-vr/
+Description: This page refers to a study on body sway with music and VR and does not include information on ECG devices.
+Page link: https://physionet.org//content/bhx-brain-bounding-box/
+Description: This page refers to a brain bounding box dataset, and it does not include information about ECG devices.
+Page link: https://physionet.org//content/butqdb/
+Description: This page refers to the BUTQDB database, but it does not include information on ECG devices.
+Page link: https://physionet.org//content/but-pdb/
+Description: This page refers to the BUT-PDB dataset which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/butppg/
+Description: This page refers to the BUTPPG dataset, but it does not include information on ECG devices.
+Page link: https://physionet.org//content/capslpdb/
+Description: This page refers to the CAPSLPDB database, which does not include information on ECG devices.
+Page link: https://physionet.org//content/actes-cycloergometer-exercise/
+Description: This page refers to a study on cycloergometer exercise and does not include information on ECG devices.
+Page link: https://physionet.org//content/crisdb/
+Description: This page refers to the CRISDB database which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/cerebral-perfusion-diabetes/
+Description: This page refers to a study of cerebral perfusion in diabetes, but does not contain information on ECG devices.
+Page link: https://physionet.org//content/cerebral-vasoreg-diabetes/
+Description: This page refers to a study of cerebral vasoregulation in diabetes, but does not contain information on ECG devices.
+Page link: https://physionet.org//content/cves/
+Description: This page refers to the CVES database, which does not include information on ECG devices.
+Page link: https://physionet.org//content/cded/
+Description: This page refers to the CDED database, which does not include information on ECG devices.
+Page link: https://physionet.org//content/charisdb/
+Description: This page refers to the CHARISDB database which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/chbmit/
+Description: This page refers to the CHBMIT database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/chexmask-cxr-segmentation-data/
+Description: This page refers to chest X-ray segmentation data and does not include information about ECG devices.
+Page link: https://physionet.org//content/ecgcipa/
+Description: This page refers to the ECGCIPA database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/mimic2-iaccd/
+Description: This page refers to the MIMIC2-IACCD database which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/consumer-grade-wearables/
+Description: This page refers to a study on consumer-grade wearable devices but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/cebsdb/
+Description: This page refers to the CEBSDB database, but it does not include information on ECG devices.
+Page link: https://physionet.org//content/culm/
+Description: This page refers to the CULM dataset which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/chf2db/
+Description: This page refers to the CHF2DB database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/bp-graphene-bioimpedance/
+Description: This page refers to a study on graphene bioimpedance for blood pressure monitoring, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/cpap-data-canterbury/
+Description: This page refers to CPAP data and does not include information about ECG devices.
+Page link: https://physionet.org//content/ctu-uhb-ctgdb/
+Description: This page refers to the CTU-UHB CTGDB database, which does not include information on ECG devices.
+Page link: https://physionet.org//content/cuiless16/
+Description: This page refers to the CUILESS16 dataset which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/cudb/
+Description: This page refers to the CUDB database which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ecgdmmld/
+Description: This page refers to the ECGDMMDL database, but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ecgrdvq/
+Description: This page refers to the ECGRDVQ database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ecg-fragment-high-risk-label/
+Description: This page refers to an ECG fragment high risk label dataset but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ecgiddb/
+Description: This page refers to the ECGIDDB database, but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/eegmat/
+Description: This page refers to EEGMAT data and does not include information about ECG devices.
+Page link: https://physionet.org//content/eegmmidb/
+Description: This page refers to the EEGMMIDB database and does not include information about ECG devices.
+Page link: https://physionet.org//content/ltrsvp/
+Description: This page refers to the LTRSVP dataset, which does not include information about ECG devices.
+Page link: https://physionet.org//content/sleep-dep-hemo-cog/
+Description: This page refers to a study on the effect of sleep deprivation on hemodynamics and cognition, but it does not include information about ECG devices.
+Page link: https://physionet.org//content/tremordb/
+Description: This page refers to the TremorDB database which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/eicu-crd-demo/
+Description: This page refers to a demo version of the eICU Collaborative Research Database and does not include information about ECG devices.
+Page link: https://physionet.org//content/ecg-spider-clip/
+Description: This page refers to the use of an ECG Spider Clip for data collection, which is a device that clips onto the body to measure ECG signals.
+Page link: https://physionet.org//content/eeg-eye-gaze-data/
+Description: This page refers to a dataset that combines EEG and eye-gaze data, and does not include information about ECG devices.
+Page link: https://physionet.org//content/ephnogram/
+Description: This page refers to the Ephnogram dataset and does not specify the type of ECG device used.
+Page link: https://physionet.org//content/cardiac-accel-canine-porcine/
+Description: This page refers to a study on cardiac acceleration in canines and porcines and does not specify the type of ECG device used.
+Page link: https://physionet.org//content/erpbci/
+Description: This page refers to an ERP BCI dataset, and it does not include information about ECG devices.
+Page link: https://physionet.org//content/edb/
+Description: This page refers to the EDB database, and it does not include information about ECG devices.
+Page link: https://physionet.org//content/earh/
+Description: This page refers to the EARH dataset and does not specify the type of ECG device used.
+Page link: https://physionet.org//content/earndb/
+Description: This page refers to the EARNDB database, but it does not include information on ECG devices.
+Page link: https://physionet.org//content/emgdb/
+Description: This page refers to the EMGDB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/eye-tracking-ecg/
+Description: This page refers to a study using both eye tracking and ECG data, but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/face-oral-temp-data/
+Description: This page refers to face and oral temperature data and does not include information about ECG devices.
+Page link: https://physionet.org//content/fantasia/
+Description: This page refers to the Fantasia database, but it does not include information on ECG devices.
+Page link: https://physionet.org//content/fecgsyndb/
+Description: This page refers to the FECGSYNDB database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/fpcgdb/
+Description: This page refers to the FPCGDB database, but it does not include information on ECG devices.
+Page link: https://physionet.org//content/gaitdb/
+Description: This page refers to the GAITDB database and does not include information about ECG devices.
+Page link: https://physionet.org//content/gaitndd/
+Description: This page refers to the GAITNDD database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/gaitpdb/
+Description: This page refers to the GAITPDB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/gait-maturation-db/
+Description: This page refers to the Gait Maturation Database, but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/grabmyo/
+Description: This page refers to the GrabMyo dataset, and it does not include information about ECG devices.
+Page link: https://physionet.org//content/hmc-sleep-staging/
+Description: This page refers to a study on sleep staging using physiological signals but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/heart-lung-segmentations-data/
+Description: This page refers to a study on heart and lung segmentation data, but it does not include information on ECG devices.
+Page link: https://physionet.org//content/meditation/
+Description: This page refers to a study on meditation but does not include information on ECG devices.
+Page link: https://physionet.org//content/hbedb/
+Description: This page refers to the HBEDB database, but it does not include information on ECG devices.
+Page link: https://physionet.org//content/i-care/
+Description: This page refers to the i-Care dataset, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/ehgdb/
+Description: This page refers to the EHGDB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/icentia11k-continuous-ecg/
+Description: This page refers to the iCentia11k Continuous ECG dataset, which implies the use of a continuous ECG monitoring device, but it does not specify the type of device.
+Page link: https://physionet.org//content/cxr-cardiomegaly/
+Description: This page refers to a study of cardiomegaly using chest X-rays, and does not include information on ECG devices.
+Page link: https://physionet.org//content/fetalheartsounddata/
+Description: This page refers to fetal heart sound data, but it does not include information about ECG devices.
+Page link: https://physionet.org//content/icehg-ds/
+Description: This page refers to the ICEHG-DS dataset, and it does not include information about ECG devices.
+Page link: https://physionet.org//content/mhd-effect-ecg-mri/
+Description: This page refers to a study on the MHD effect on ECG during MRI, indicating use of an ECG device compatible with MRI but not specified.
+Page link: https://physionet.org//content/in-gauge-and-en-gage/
+Description: This page refers to the In-Gauge and En-Gauge dataset but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/eeg-eye-gaze-for-fls-tasks/
+Description: This page refers to a dataset that combines EEG and eye-gaze data for FLS tasks, and does not include information about ECG devices.
+Page link: https://physionet.org//content/iafdb/
+Description: This page refers to the IAFDB database and does not specify the type of ECG device used.
+Page link: https://physionet.org//content/kiel-cardio/
+Description: This page refers to the Kiel Cardiology Database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/kinecal/
+Description: This page refers to the KineCal dataset, and it does not include information about ECG devices.
+Page link: https://physionet.org//content/accelerometry-walk-climb-drive/
+Description: This page refers to a study using accelerometry for activity recognition, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/ludb/
+Description: This page refers to the LUDB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/ltafdb/
+Description: This page refers to the LTAFDB database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ltmm/
+Description: This page refers to the LTMM dataset and does not include information about ECG devices.
+Page link: https://physionet.org//content/umwdb/
+Description: This page refers to the UMWDB database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ltstdb/
+Description: This page refers to the LTSTDB database, which does not specify the type of ECG device used.
+Page link: https://physionet.org//content/mssvepdb/
+Description: This page refers to the MSSVEPDB dataset, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/mental-fnirs/
+Description: This page refers to a study using fNIRS for mental task monitoring, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/mghdb/
+Description: This page refers to the MGHDB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/music-motion-2012/
+Description: This page refers to the Music and Motion 2012 dataset, and it does not include information about ECG devices.
+Page link: https://physionet.org//content/music-motion-2015/
+Description: This page refers to the Music and Motion 2015 dataset and does not include information about ECG devices.
+Page link: https://physionet.org//content/mimicdb/
+Description: This page refers to the MIMIC database and does not specify the type of ECG device used.
+Page link: https://physionet.org//content/mimiciii-demo/
+Description: This page refers to a demo version of the MIMIC-III database, which does not include information on ECG devices.
+Page link: https://physionet.org//content/mimic3wdb/
+Description: This page refers to the MIMIC3WDB database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/mimic3wdb-matched/
+Description: This page refers to the MIMIC3WDB-Matched dataset and does not specify the type of ECG device used.
+Page link: https://physionet.org//content/mimic-iv-demo/
+Description: This page refers to a demo version of the MIMIC-IV database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/mimic-iv-fhir-demo/
+Description: This page refers to a demo version of the MIMIC-IV FHIR database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/mimic-iv-demo-omop/
+Description: This page refers to a demo version of the MIMIC-IV OMOP database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/mimic-iv-ecg-demo/
+Description: This page refers to a demo version of the MIMIC-IV ECG database, but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/mimic-iv-ecg/
+Description: This page refers to the MIMIC-IV ECG database, but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/mimic-iv-ed-demo/
+Description: This page refers to a demo version of the MIMIC-IV ED database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/mimic4wdb/
+Description: This page refers to the MIMIC4WDB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/mitdb/
+Description: This page refers to the MIT-BIH Arrhythmia Database (MITDB) but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/pwave/
+Description: This page refers to the P-Wave database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/afdb/
+Description: This page refers to the Atrial Fibrillation Database (AFDB) but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/cdb/
+Description: This page refers to the Combined Measurement Database (CDB) but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ltdb/
+Description: This page refers to the Long-Term ST Database (LTDB), but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/vfdb/
+Description: This page refers to the Ventricular Fibrillation Database (VFDB) but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/nstdb/
+Description: This page refers to the NSTDB database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/nsrdb/
+Description: This page refers to the NSRDB database, but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/slpdb/
+Description: This page refers to the SLPDB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/stdb/
+Description: This page refers to the STDB database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/svdb/
+Description: This page refers to the SVDB database, but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/mmgdb/
+Description: This page refers to the MMGDB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/plantar/
+Description: This page refers to a study of plantar pressure and does not include information about ECG devices.
+Page link: https://physionet.org//content/sleep-accel/
+Description: This page refers to a study on sleep and acceleration data, but it does not include information about ECG devices.
+Page link: https://physionet.org//content/macecgdb/
+Description: This page refers to the MACEcgDB dataset, but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/motion-artifact/
+Description: This page refers to a study on motion artifacts in physiological signals but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/mmash/
+Description: This page refers to the MMASH dataset and does not include information on ECG devices.
+Page link: https://physionet.org//content/music-sudden-cardiac-death/
+Description: This page refers to a study on the relationship between music and sudden cardiac death, and it does not include information on specific ECG devices.
+Page link: https://physionet.org//content/nqmitcsxpd/
+Description: This page refers to the NQMITCSXPD database, and it does not include information about ECG devices.
+Page link: https://physionet.org//content/ninfea/
+Description: This page refers to the NINFEA database and does not include information about ECG devices.
+Page link: https://physionet.org//content/nesfdb/
+Description: This page refers to the NESFDB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/noneeg/
+Description: This page refers to a non-EEG dataset, and it does not include information about ECG devices.
+Page link: https://physionet.org//content/nifeadb/
+Description: This page refers to the NIFEADB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/nifecgdb/
+Description: This page refers to the NIFECGDB database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/nsr2db/
+Description: This page refers to the NSR2DB database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/norwegian-athlete-ecg/
+Description: This page refers to the Norwegian Athlete ECG database, and it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ob1db/
+Description: This page refers to the OB1DB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/hd-semg/
+Description: This page refers to a study using high-density surface EMG, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/parkinsons-disease-smartwatch/
+Description: This page refers to a study using smartwatches for Parkinson's disease monitoring, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/afpdb/
+Description: This page refers to the AFPDB database, but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/patient-level-data-covid-ms/
+Description: This page refers to patient-level data related to COVID-19, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/osv/
+Description: This page refers to the OSV dataset, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/phdsm/
+Description: This page refers to the PHDSM dataset, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/prcp/
+Description: This page refers to the PRCP dataset, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/physiozoo/
+Description: This page refers to the PhysioZoo dataset, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/szdb/
+Description: This page refers to the SZDB database, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/pressure-flow-circum-cpap/
+Description: This page refers to a study of pressure and flow during CPAP and does not include information on ECG devices.
+Page link: https://physionet.org//content/picsdb/
+Description: This page refers to the PICSDB dataset and does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ptbdb/
+Description: This page refers to the PTB Diagnostic ECG Database (PTBDB), but it does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ptb-xl-plus/
+Description: This page refers to the PTB-XL-Plus database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/ptb-xl/
+Description: This page refers to the PTB-XL database but does not specify the type of ECG device used.
+Page link: https://physionet.org//content/eda-rest-sedation/
+Description: This page refers to a study on electrodermal activity during rest and sedation, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/pulse-transit-time-ppg/
+Description: This page refers to a study on pulse transit time using PPG, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/q-pain/
+Description: This page refers to the Q-Pain dataset, and it does not include information on ECG devices.
+Page link: https://physionet.org//content/qtdb/
+Description: This page refers to the QT Database (QTDB), but it does not specify the type of ECG device used.

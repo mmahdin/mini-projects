@@ -1,0 +1,2 @@
+/home/mahdi/Documents/uhd/examples/dinamically generated file/CMakeFiles/edit_cache.dir
+/home/mahdi/Documents/uhd/examples/dinamically generated file/CMakeFiles/rebuild_cache.dir
