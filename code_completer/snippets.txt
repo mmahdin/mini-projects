@@ -1,0 +1,596 @@
+class DeepNetwork(torch.nn.Module):
+    def __init__(self, input_dim=8, hidden_dims=[128, 128, 128], num_classes=5):
+        super(DeepNetwork, self).__init__()
+        layers = []
+        dims = [input_dim] + hidden_dims
+        
+        # Build the hidden layers
+        for i in range(len(dims) - 1):
+            layers.append(torch.nn.Linear(dims[i], dims[i + 1], dtype=torch.float64))
+            layers.append(torch.nn.BatchNorm1d(dims[i + 1], dtype=torch.float64)) 
+            layers.append(torch.nn.ReLU())
+        
+        # Output layer
+        layers.append(torch.nn.Linear(dims[-1], num_classes, dtype=torch.float64))
+        
+        # Sequentially stack the layers
+        self.model = torch.nn.Sequential(*layers)
+        
+    def forward(self, x):
+        return self.model(x)
+
+
+class Linear(object):
+    @staticmethod
+    def forward(x, w, b):
+        N = x.shape[0]
+        transform = x.reshape((N, -1))
+        out = torch.mm(transform, w) + b
+        cache = (x, w, b)
+        return out, cache
+
+    @staticmethod
+    def backward(dout, cache):
+        x, w, b = cache
+        dx, dw, db = None, None, None
+        N = x.shape[0]
+        # Reshape x to (N, D)
+        input_vect = x.reshape((N, -1))
+        # Gradient with respect to input x
+        dx = dout @ w.T
+        dx = dx.view(*x.shape)
+        # Gradient with respect to weights w
+        dw = input_vect.T @ dout
+        # Gradient with respect to biases b
+        db = dout.sum(dim=0)
+        return dx, dw, db
+
+
+class ReLU(object):
+    @staticmethod
+    def forward(x):
+        out = x.clamp(min=0)
+        cache = x
+        return out, cache
+
+    @staticmethod
+    def backward(dout, cache):
+        dx, x = None, cache
+        dx = dout.clone()
+        dx[x <= 0] = 0
+        return dx
+
+
+class Linear_ReLU(object):
+    @staticmethod
+    def forward(x, w, b):
+        a, fc_cache = Linear.forward(x, w, b)
+        out, relu_cache = ReLU.forward(a)
+        cache = (fc_cache, relu_cache)
+        return out, cache
+
+    @staticmethod
+    def backward(dout, cache):
+        fc_cache, relu_cache = cache
+        da = ReLU.backward(dout, relu_cache)
+        dx, dw, db = Linear.backward(da, fc_cache)
+        return dx, dw, db
+
+
+class deepNetwork:
+    def __init__(self,  hidden_dims, input_dim=8, num_classes=10, reg=0.0, weight_scale=1e-2, dtype=torch.float, device='cpu'):
+        self.num_layers = 1 + len(hidden_dims)
+        self.reg = reg
+        self.dtype = dtype
+        self.params = {}
+
+        dims = [input_dim] + hidden_dims + [num_classes]
+        for i in range(self.num_layers):
+            self.params[f'W{i+1}'] = torch.randn(dims[i], dims[i+1], dtype=dtype, device=device) * weight_scale
+            self.params[f'b{i+1}'] = torch.zeros(dims[i+1], dtype=dtype, device=device)
+    
+    def loss(self, X, y=None):
+        X = X.to(self.dtype)
+        mode = 'test' if y is None else 'train'
+        scores = None
+        h_out = X
+        caches = [] 
+
+        for i in range(0, self.num_layers - 1):
+            w = self.params['W' + str(i + 1)]
+            b = self.params['b' + str(i + 1)]
+            h_out, cache = Linear_ReLU.forward(h_out, w, b)
+            caches.append(cache)
+
+        w = self.params['W' + str(self.num_layers)]
+        b = self.params['b' + str(self.num_layers)]
+        h_out, cache = Linear.forward(h_out, w, b)
+
+        caches.append(cache)
+        scores = h_out
+
+        if mode == 'test':
+            return scores
+        
+        loss, grads = 0.0, {}
+        loss, dout = self.compute_loss(scores, y)
+
+        # regularization term
+        for i in range(self.num_layers):
+            w = self.params['W' + str(i+1)]
+            loss += self.reg * torch.sum(w ** 2)
+
+        # for the last layer, it is only Linear forward
+        dout, dw, db = Linear.backward(dout, caches.pop())
+
+        grads['W' + str(self.num_layers)] = dw + 2 * self.reg * self.params['W' + str(self.num_layers)]
+        grads['b' + str(self.num_layers)] = db
+
+        for i in range(0, self.num_layers-1):
+            # go to index 0
+            dout, dw, db = Linear_ReLU.backward(dout, caches.pop())
+            grads['W' + str(self.num_layers - 1 - i)] = dw + 2 * self.reg * self.params['W' + str(self.num_layers - 1 - i)]
+            grads['b' + str(self.num_layers - 1 - i)] = db
+
+        return loss, grads
+
+    def compute_loss(self, scores, y):
+        N = scores.shape[0]
+        
+        # Compute softmax
+        exp_scores = torch.exp(scores - torch.max(scores, dim=1, keepdim=True)[0])  # numerical stability
+        probs = exp_scores / torch.sum(exp_scores, dim=1, keepdim=True)
+        
+        # Compute cross-entropy loss
+        correct_logprobs = -torch.log(probs[range(N), y])
+        loss = torch.sum(correct_logprobs) / N
+        
+        # Gradient of loss with respect to scores (softmax gradient)
+        dout = probs
+        dout[range(N), y] -= 1
+        dout /= N
+
+        return loss, dout
+
+    def predict(self, X):
+        scores = self.loss(X)
+        y_pred = torch.argmax(scores, dim=1)
+        return y_pred
+
+
+def initialize_centroids(data, k):
+    n_samples, n_features = data.shape
+    centroids = data[np.random.choice(n_samples, k, replace=False)]
+    return centroids
+
+def closest_centroid(data, centroids):
+    distances = np.linalg.norm(data[:, np.newaxis] - centroids, axis=2)
+    return np.argmin(distances, axis=1)
+
+
+def compute_centroids(data, labels, k):
+    n_features = data.shape[1]
+    centroids = np.zeros((k, n_features))
+    
+    for i in range(k):
+        points_in_cluster = data[labels == i]
+        if points_in_cluster.size:
+            centroids[i] = points_in_cluster.mean(axis=0)
+    
+    return centroids
+
+def k_means(data, k, max_iters=100, tol=1e-4):
+    # Step 1: Initialize the centroids
+    centroids = initialize_centroids(data, k)
+
+    for _ in range(max_iters):
+        # Step 2: Assign each data point to the closest centroid
+        labels = closest_centroid(data, centroids)
+
+        # Step 3: Calculate new centroids as the mean of the points in each cluster
+        new_centroids = compute_centroids(data, labels, k)
+
+        # Step 4: Check for convergence (if centroids do not change much)
+        if np.linalg.norm(new_centroids - centroids) < tol:
+            break
+
+        centroids = new_centroids
+
+    return centroids, labels
+
+def plot_clusters(np_data, labels, k, centroids):
+    colors = ['ro', 'go', 'bo', 'mo', 'co', 'yo', 'ko']  # Colors for different clusters
+
+    for i in range(k):
+        cluster_data = np_data[labels == i]
+        plt.plot(cluster_data[:, 0], cluster_data[:, 1], colors[i % len(colors)], label=f"Cluster {i+1}")
+        plt.plot(centroids[i][0],centroids[i][1], 'ko', label=f"Cluster {i+1}")
+
+    plt.legend()
+    plt.title(f"Clusters for k={k}")
+    plt.show()
+
+def cluster_and_plot(np_data):
+    for k in [2, 3, 4]:  # Perform clustering for k=2, 3, and 4
+        centroids, labels = k_means(np_data, k)
+        plot_clusters(np_data, labels, k, centroids)
+
+def euclidean_distance(a, b):
+    return np.sqrt(np.sum((a - b)**2))
+
+def calculate_inertia(X, clusters, centroids):
+    inertia = 0
+    for i, point in enumerate(X):
+        centroid = centroids[clusters[i]]
+        inertia += euclidean_distance(point, centroid)**2
+    return inertia/X.shape[0]
+
+
+def initialize_centers(data, num_centers):
+    kmeans = KMeans(n_clusters=num_centers, random_state=0)
+    kmeans.fit(data)
+    centers = kmeans.cluster_centers_
+    std_devs = np.zeros(num_centers)
+    for i in range(num_centers):
+        std_devs[i] = np.std(data[np.where(kmeans.labels_ == i)])
+    return centers, std_devs, kmeans.labels_
+
+def gaussian(x, mean, std_dev):
+    return np.exp(-0.5 * ((x - mean) / std_dev) ** 2)
+
+lass RBFLayer(nn.Module):
+    def __init__(self, in_features, out_features, centers, std_devs):
+        super(RBFLayer, self).__init__()
+        # Use the centers and std_devs from k-means initialization
+        self.centers = nn.Parameter(torch.Tensor(centers))  # RBF centers
+        self.beta = nn.Parameter(torch.Tensor(1 / (2 * std_devs**2)))  # Use std_devs to initialize beta
+
+    def forward(self, x):
+        x = x.unsqueeze(1)
+        centers = self.centers.unsqueeze(0)
+        dist = torch.sum((x - centers) ** 2, dim=2)
+        return torch.exp(-self.beta * dist)
+
+# Define RBF Network
+class RBFNetwork(nn.Module):
+    def __init__(self, in_features, hidden_features, out_features, centers, std_devs):
+        super(RBFNetwork, self).__init__()
+        self.rbf_layer = RBFLayer(in_features, hidden_features, centers, std_devs)
+        self.fc_layer = nn.Linear(hidden_features, out_features)
+
+    def forward(self, x):
+        rbf_output = self.rbf_layer(x)
+        output = torch.sigmoid(self.fc_layer(rbf_output)) 
+        return output
+    
+# Define RBF Network
+class RBFNetwork_Reg(nn.Module):
+    def __init__(self, in_features, hidden_features, out_features, centers, std_devs):
+        super(RBFNetwork_Reg, self).__init__()
+        self.rbf_layer = RBFLayer(in_features, hidden_features, centers, std_devs)
+        self.fc_layer = nn.Linear(hidden_features, out_features)
+
+    def forward(self, x):
+        rbf_output = self.rbf_layer(x)
+        output = self.fc_layer(rbf_output)
+        return output
+    
+# Define RBF Network with Batch Normalization
+class RBFNetwork_BN(nn.Module):
+    def __init__(self, in_features, hidden_features, out_features, centers, std_devs):
+        super(RBFNetwork_BN, self).__init__()
+        self.rbf_layer = RBFLayer(in_features, hidden_features, centers, std_devs)
+        self.batch_norm = nn.BatchNorm1d(hidden_features)  # Batch normalization after RBF layer
+        self.fc_layer = nn.Linear(hidden_features, out_features)
+
+    def forward(self, x):
+        rbf_output = self.rbf_layer(x)
+        rbf_output = self.batch_norm(rbf_output)  # Apply batch normalization
+        return self.fc_layer(rbf_output)
+
+
+def plot_decision_boundary(model, X, y):
+    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.02), np.arange(y_min, y_max, 0.02))
+    
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+    grid_tensor = torch.tensor(grid_points, dtype=torch.float32)
+    
+    Z = model(grid_tensor).detach().numpy().reshape(xx.shape)
+    Z = (Z > 0.5).astype(int)  # Convert probabilities to class labels
+    
+    plt.figure(figsize=(8,6))
+    plt.contourf(xx, yy, Z, alpha=0.8, cmap='coolwarm')
+    plt.scatter(X[:, 0], X[:, 1], c=y.squeeze(), cmap='coolwarm', edgecolors='k')
+    plt.title('RBF Network Decision Boundary')
+    plt.show()
+
+plot_decision_boundary(model, X.numpy(), y.numpy())
+
+
+class HopfieldNetwork:
+    def __init__(self, num_neurons):
+        self.num_neurons = num_neurons
+        self.weights = np.zeros((num_neurons, num_neurons))
+
+    # Hebbian learning rule for training
+    def train(self, patterns):
+        num_patterns = len(patterns)
+        for p in patterns:
+            p = p.reshape(self.num_neurons, 1)
+            self.weights += p @ p.T
+        # Set diagonal to 0 (no neuron is connected to itself)
+        np.fill_diagonal(self.weights, 0)
+        self.weights /= num_patterns
+
+    # Function to update state of the neurons
+    def recall(self, pattern, steps=5):
+        state = pattern.copy()
+        for _ in range(steps):
+            # Update each neuron asynchronously
+            for i in range(self.num_neurons):
+                net_input = np.dot(self.weights[i], state)
+                state[i] = 1 if net_input >= 0 else -1
+        return state
+
+    # Energy function
+    def energy(self, state):
+        return -0.5 * np.sum(self.weights * np.outer(state, state))
+
+
+# RNN
+data = pd.read_csv('IMDB-sentiment-analysis-master/IMDB-Dataset.csv')
+# Build vocabulary manually and encode
+max_features = 5000
+counter = Counter([word for review in data['review'] for word in review.split()])
+most_common = counter.most_common(max_features - 2)  # Reserve spots for <pad> and <unk>
+vocab = {word: idx + 2 for idx, (word, _) in enumerate(most_common)}  # +2 to reserve 0 for <pad>, 1 for <unk>
+vocab['<pad>'] = 0
+vocab['<unk>'] = 1
+
+def encode(text):
+    return [vocab.get(token, vocab['<unk>']) for token in text.split()]
+
+data['encoded_review'] = data['review'].apply(encode)
+
+# Pad sequences to maxlen
+maxlen = 600
+def pad_sequence_custom(sequence, maxlen=maxlen, padding_value=vocab['<pad>']):
+    return torch.tensor(sequence[:maxlen] + [padding_value] * (maxlen - len(sequence)), dtype=torch.long)
+
+data['padded_review'] = data['encoded_review'].apply(pad_sequence_custom)
+X = torch.stack(data['padded_review'].tolist())
+
+# Convert labels to binary
+data['sentiment'] = data['sentiment'].apply(lambda x: 1 if x == 'positive' else 0)
+Y = torch.tensor(data['sentiment'].values, dtype=torch.long)
+
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+# Create DataLoader for batching
+batch_size = 64
+train_data = TensorDataset(X_train, Y_train)
+test_data = TensorDataset(X_test, Y_test)
+train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
+test_loader = DataLoader(test_data, batch_size=batch_size)
+
+# Define the RNN model for sentiment analysis
+class EncoderRNN(nn.Module):
+    def __init__(self, vocab_size, embed_size, hidden_size):
+        super(EncoderRNN, self).__init__()
+        self.embedding = nn.Embedding(vocab_size, embed_size) # assigne a vector of embec_size to each word
+        self.rnn = nn.RNN(embed_size, hidden_size, batch_first=True)
+        self.hidden_dim = hidden_size
+        
+    def forward(self, x):   
+        x = self.embedding(x)
+        output, hidden = self.rnn(x)
+        return hidden
+    
+
+class DecoderRNN(nn.Module):
+    def __init__(self, output_dim, hidden_dim):
+        super(DecoderRNN, self).__init__()
+        self.rnn = nn.RNN(hidden_dim, hidden_dim, batch_first=True)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+        self.sigmoid = nn.Sigmoid()
+        
+        self.hidden_dim = hidden_dim
+
+    def forward(self, hidden):
+        batch_size = hidden.size(1)
+        input = torch.zeros(batch_size, 1, self.hidden_dim).to(hidden.device)  # [batch_size, 1, hidden_dim]
+        outputs, hidden = self.rnn(input, hidden)
+        
+        # Pass final RNN output to linear layer
+        prediction = self.fc(outputs.squeeze(1))  # prediction = [batch_size, output_dim]
+        return self.sigmoid(prediction).squeeze() 
+    
+
+class Seq2Seq(nn.Module):
+    def __init__(self, encoder, decoder):
+        super(Seq2Seq, self).__init__()
+        self.encoder = encoder
+        self.decoder = decoder
+
+    def forward(self, src):
+        hidden = self.encoder(src)
+        output = self.decoder(hidden)
+        return output# Define the LSTM model
+class SentimentLSTM(nn.Module):
+    def __init__(self, max_features, embed_dim, lstm_out, num_classes=2):
+        super(SentimentLSTM, self).__init__()
+        self.embedding = nn.Embedding(max_features, embed_dim)
+        self.lstm = nn.LSTM(embed_dim, lstm_out, batch_first=True)
+        self.dropout = nn.Dropout(0.4)
+        self.fc = nn.Linear(lstm_out, num_classes)
+        
+    def forward(self, x):
+        x = self.embedding(x)
+        x = self.dropout(x)
+        lstm_out, (h_n, c_n) = self.lstm(x)
+        out = self.fc(h_n[-1])  # Using the last hidden state
+        return out
+
+# Define the LSTM model
+class SentimentLSTM(nn.Module):
+    def __init__(self, max_features, embed_dim, lstm_out, num_classes=2):
+        super(SentimentLSTM, self).__init__()
+        self.embedding = nn.Embedding(max_features, embed_dim)
+        self.lstm = nn.LSTM(embed_dim, lstm_out, batch_first=True)
+        self.dropout = nn.Dropout(0.4)
+        self.fc = nn.Linear(lstm_out, num_classes)
+        
+    def forward(self, x):
+        x = self.embedding(x)
+        x = self.dropout(x)
+        lstm_out, (h_n, c_n) = self.lstm(x)
+        out = self.fc(h_n[-1])  # Using the last hidden state
+        return out
+
+# Define the GRU model
+class SentimentGRU(nn.Module):
+    def __init__(self, max_features, embed_dim, gru_out, num_classes=2):
+        super(SentimentGRU, self).__init__()
+        self.embedding = nn.Embedding(max_features, embed_dim)
+        self.gru = nn.GRU(embed_dim, gru_out, batch_first=True, dropout=0.2)
+        self.dropout = nn.Dropout(0.4)
+        self.fc = nn.Linear(gru_out, num_classes)
+        
+    def forward(self, x):
+        x = self.embedding(x)
+        x = self.dropout(x)
+        gru_out, h_n = self.gru(x)
+        out = self.fc(h_n[-1])  # Using the last hidden state
+        return out
+
+def train_model(
+    model, optimizer, loader_train, loader_val,
+    device='cuda', dtype=torch.float32, epochs=1,
+    scheduler=None, learning_rate_decay=0.1, schedule=[],
+    verbose=True, checkpoint_path='./models/checkpoint.pth',
+    history_path='./history/train_history.pkl'
+):
+   
+    model = model.to(device)
+    train_metrics_history = {
+        'loss': [], 'accuracy': []
+    }
+    val_metrics_history = {
+        'accuracy': []
+    }
+    lr_history = []
+    best_val_acc = 0.0
+    start_epoch = 0
+
+    # Check if a checkpoint exists
+    if os.path.exists(checkpoint_path):
+        print("Resuming training from checkpoint...")
+        checkpoint = torch.load(checkpoint_path)
+        model.load_state_dict(checkpoint['model_state'])
+        optimizer.load_state_dict(checkpoint['optimizer_state'])
+        if scheduler:
+            scheduler.load_state_dict(checkpoint['scheduler_state'])
+        start_epoch = checkpoint['epoch']
+        train_metrics_history = checkpoint['train_history']
+        val_metrics_history = checkpoint['val_history']
+        lr_history = checkpoint['lr_history']
+        best_val_acc = checkpoint['best_val_acc']
+  
+        print(f"Resumed training from epoch {start_epoch}")
+
+    for epoch in range(start_epoch, epochs):
+        print(f"Epoch {epoch + 1}/{epochs}")
+        start_time = time.time()  # Start time for epoch
+
+        # Training phase
+        model.train()
+        epoch_loss = 0.0
+        num_correct = 0
+        num_samples = 0
+        all_preds = []
+        all_labels = []
+
+        for batch_idx, batch in enumerate(loader_train):
+            x = batch["image"].to(device=device, dtype=dtype)
+   
+            y = batch["label"].to(device=device)
+
+            scores = model(x)
+            loss = F.cross_entropy(scores, y)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            if scheduler:
+                scheduler.step()
+                current_lr = optimizer.param_groups[0]['lr']
+                lr_history.append(current_lr)
+
+            _, preds = scores.max(1)
+
+            num_correct += (preds == y).sum().item()
+            num_samples += y.size(0)
+            epoch_loss += loss.item()
+
+            if verbose and batch_idx % 100 == 0:
+                print(f"  Batch {batch_idx}, Loss = {loss.item():.4f}")
+
+
+
+        avg_loss = epoch_loss / len(loader_train)
+        train_metrics_history['loss'].append(avg_loss)
+        train_accuracy = float(num_correct) / num_samples
+        train_metrics_history['accuracy'].append(train_accuracy)
+
+
+        print(f"  Training Loss: {avg_loss:.4f}, Accuracy: {train_accuracy:.4f}")
+
+        # Validation phase
+        val_accuracy = calculate_metrics(loader_val, model, device=device, dtype=dtype)
+
+        print(f"  Validation Accuracy: {val_accuracy:.4f}")
+       
+        checkpoint = {
+            'epoch': epoch + 1,
+            'model_state': model.state_dict(),
+            'optimizer_state': optimizer.state_dict(),
+            'scheduler_state': scheduler.state_dict() if scheduler else None,
+            'train_history': train_metrics_history,
+            
+            'val_history': val_metrics_history,
+            'lr_history': lr_history,
+            'best_val_acc': best_val_acc
+        }
+        torch.save(checkpoint, checkpoint_path)
+        print(f"  Checkpoint saved at epoch {epoch + 1}")
+
+        # Print time spent for the epoch
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"  Time spent for epoch {epoch + 1}: {elapsed_time:.2f} seconds")
+
+    print("Training complete!")
+    return  train_metrics_history, val_metrics_history, lr_history
+
+
+def calculate_metrics(loader, model, device='cpu', dtype=torch.float32):
+    model.eval()
+    num_correct = 0
+    num_samples = 0
+
+    with torch.no_grad():
+        for data in loader:
+            images = data['image'].to(device=device, dtype=dtype)
+            labels = data['label'].to(device=device)
+
+            outputs = model(images)
+            _, preds = outputs.max(1)
+
+            num_correct += (preds == labels).sum().item()
+            num_samples += labels.size(0)
+
+    accuracy = float(num_correct) / num_samples
+
+    return accuracy
