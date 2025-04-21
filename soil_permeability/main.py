@@ -24,21 +24,32 @@ class Simulateion:
         self.m = int(input("enter m:"))
         self.sigma0_prime = float(input("enter sigma0_prime:"))
         self.delta_sigma_prime = float(input("enter delta_sigma_prime:"))
-        self.Cc = float(input("enter Cc"))
-        self.Cs = float(input("enter Cs"))
+        self.Cc = float(input("enter Cc"))  # Ccn
+        self.Cs = float(input("enter Cs"))  # Ccr
         self.e0 = float(input('enter e0'))
-        self.bk = float(eval(input('enter bk')))
-        self.M = float(input('enter M:'))
-        # self.sigma_c = float(input('enter sigma_c'))
-        print('***************', ' ', self.bk)
+        # self.bk = float(eval(input('enter bk')))
+        self.k0 = float(eval(input('enter k0')))
+        self.M = float(input('enter M:'))  # Ck
+        self.sigma_prime_c = float(input('enter sigma_prime_c'))
+        print('\n*************** ', self.k0)
 
     def init_matrix(self):
         self.delta_z0 = self.H / self.n
         self.delta_t = self.T / self.m
 
-        self.CV_RI = 2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M)) * \
+        self.a = self.e0 + self.Cc*np.log10(self.sigma0_prime)
+        self.d = self.e0 - self.Cc * \
+            np.log10(self.sigma_prime_c/self.sigma0_prime) + \
+            self.Cs*np.log10(self.sigma_prime_c)
+        self.bk = self.e0 - self.M*np.log10(self.k0)
+        print(f'a: {self.a}')
+        print(f'd: {self.d}')
+        print(f'bk: {self.bk}')
+        print(f'(self.a-self.bk)/self.M : {(self.a-self.bk)/self.M}')
+        print(10**((self.a-self.bk)/self.M))
+        self.CV_RI = 2.3*(1+self.e0) * (10**((self.a-self.bk)/self.M)) * \
             (self.sigma0_prime**(1-self.Cc/self.M)) / (self.rw*self.Cc)
-        self.CV_FA = 2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M)) * (
+        self.CV_FA = 2.3*(1+self.e0) * (10**((self.d-self.bk)/self.M)) * (
             (self.sigma0_prime+self.delta_sigma_prime)**(1-self.Cs/self.M)) / (self.rw*self.Cs)
 
         self.list_u = np.zeros((self.n, self.m))
@@ -136,7 +147,10 @@ class Simulateion:
         #     "10pow: " + str(10**((self.e0-self.bk)/self.M)) + '  ***  ')
         # self.file.write("cv: " + str(2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M))
         #                 * (sigma**(1-self.C/self.M)) / (self.rw*self.Cc)) + '  ***  ')
-        return 2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M)) * (sigma**(1-self.C/self.M)) / (self.rw*self.Cc)
+        if self.C == self.Cc:
+            return 2.3*(1+self.e0) * (10**((self.a-self.bk)/self.M)) * (sigma**(1-self.C/self.M)) / (self.rw*self.C)
+        else:
+            return 2.3*(1+self.e0) * (10**((self.d-self.bk)/self.M)) * (sigma**(1-self.C/self.M)) / (self.rw*self.C)
 
     def calc_c(self, i, j):
         if self.sig_avg(i-1, j) >= self.sig_avg(i-1, j-1):
