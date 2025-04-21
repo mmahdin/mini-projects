@@ -29,7 +29,7 @@ class Simulateion:
         self.e0 = float(input('enter e0'))
         self.bk = float(eval(input('enter bk')))
         self.M = float(input('enter M:'))
-        self.sigma_c = float(input('enter sigma_c'))
+        # self.sigma_c = float(input('enter sigma_c'))
         print('***************', ' ', self.bk)
 
     def init_matrix(self):
@@ -37,14 +37,14 @@ class Simulateion:
         self.delta_t = self.T / self.m
 
         self.CV_RI = 2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M)) * \
-            (self.sigma0_prime**(1-self.C/self.M)) / (self.rw*self.Cc)
+            (self.sigma0_prime**(1-self.Cc/self.M)) / (self.rw*self.Cc)
         self.CV_FA = 2.3*(1+self.e0) * (10**((self.e0-self.bk)/self.M)) * (
-            (self.sigma0_prime+self.delta_sigma_prime)**(1-self.C/self.M)) / (self.rw*self.Cc)
+            (self.sigma0_prime+self.delta_sigma_prime)**(1-self.Cs/self.M)) / (self.rw*self.Cs)
 
         self.list_u = np.zeros((self.n, self.m))
         self.list_u[1:, 0] = self.delta_sigma_prime
-        self.calc_c(1, 1)
-        cv = self.delta_sigma_prime
+
+        cv = self.CV_RI
         a = cv*self.delta_t / (self.delta_z0**2)
         for j in range(1, self.n):
             self.list_u[j, 1] = a*cv + a*cv + (1-a-a)*cv
@@ -72,6 +72,7 @@ class Simulateion:
                 self.file.write('i: ' + str(i) + '    j: ' + str(j) + '\n')
 
                 self.calc_u(i, j)
+                self.file.write(f'list_u[{i},{j}]= {self.list_u[i, j]}\n')
 
                 if np.isnan(self.list_u[i, j]):
                     self.file.close()
@@ -148,8 +149,8 @@ class Simulateion:
         # print('calc_a', i, j)
         cv = self.calc_cv(i, j)
         dz = self.calc_dz(i, j)
-        # self.file.write('dz: ' + str(dz) + '  ***  ' + 'a: ' +
-        #                 str(cv*self.delta_t / (dz**2)) + '\n')
+        self.file.write('dz: ' + str(dz) + '  ***  ' + 'a: ' +
+                        str(cv*self.delta_t / (dz**2)) + '\n')
         return cv*self.delta_t / (dz**2)
 
     def calc_u(self, i, j):
@@ -208,8 +209,8 @@ class Simulateion:
 
         plt.figure()
         plt.plot(t[:-1], unl[:-1])
-        plt.xscale('log')
-        plt.gca().invert_yaxis()
+        # plt.xscale('log')
+        # plt.gca().invert_yaxis()
         plt.title("Unl-t")
         plt.xlabel('t')
         plt.ylabel('Unl')

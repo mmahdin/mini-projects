@@ -22,7 +22,6 @@ class Base():
         self.Ck = float(input('enter Ck\n'))  # M
         self.sigma_c_prime = float(input('enter sigma c prime:\n'))
         self.mv0 = float(input('enter mv0:\n'))
-        print(self.kv0)
         # self.Kve = float(input('enter Kv\n'))
         # self.sigma_prime_e = float(input('enter sigma prime e\n'))
         # self.k1 = float(input('enter K1\n'))
@@ -83,20 +82,25 @@ class Base():
                 self.list_sigma_prime[i][j-1] = self.list_sigma_prime[i][0] + \
                     self.q - self.list_u[i][j-1]
                 if self.list_sigma_prime[i][j-1] <= self.sigma_c_prime:
-                    self.list_m_v[i][j] = self.list_m_v[i][0] * \
-                        (self.list_sigma_prime[i][0] /
-                         self.list_sigma_prime[i][j-1])
+                    # self.list_m_v[i][j] = self.list_m_v[i][0] * \
+                    #     (self.list_sigma_prime[i][0] /
+                    #      self.list_sigma_prime[i][j-1])
                     self.list_k_v[i][j] = self.list_k_v[i][0] * (
                         self.list_sigma_prime[i][0] / self.list_sigma_prime[i][j-1]) ** (self.Ccn / self.Ck)
+                    c = self.Ccn
 
                 else:
-                    self.list_m_v[i][j] = (self.Ccr / self.Ccn) * self.list_m_v[i][0] * (
-                        self.list_sigma_prime[i][0] / self.list_sigma_prime[i][j-1])
+                    # self.list_m_v[i][j] = (self.Ccr / self.Ccn) * self.list_m_v[i][0] * (
+                    #     self.list_sigma_prime[i][0] / self.list_sigma_prime[i][j-1])
                     self.list_k_v[i][j] = self.list_k_v[i][0] * ((self.list_sigma_prime[i][0] / self.sigma_c_prime) ** (
                         self.Ccn / self.Ck)) * (self.sigma_c_prime / self.list_sigma_prime[i][j-1]) ** (self.Ccr / self.Ck)
+                    c = self.Ccr
 
-                self.list_c_v[i][j] = self.list_k_v[i][j] / \
-                    (self.list_m_v[i][j] * self.rw)
+                # self.list_c_v[i][j] = self.list_k_v[i][j] / \
+                #     (self.list_m_v[i][j] * self.rw)
+                self.list_c_v[i][j] = self.list_k_v[i][j] * \
+                    (self.e0 + 1) * \
+                    self.list_sigma_prime[i][j] / (self.rw * 0.434 * c)
 
                 self.list_T_v[i][j] = 4 * self.list_c_v[i][j] * \
                     self.delta_t * j / (self.H**2)

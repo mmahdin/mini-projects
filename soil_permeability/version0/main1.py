@@ -1,5 +1,4 @@
 
-from re import T
 import Module
 import numpy as np
 import matplotlib.pyplot as plt
@@ -146,21 +145,21 @@ plt.show()
 # # Module.plt.show()
 # Module.plt.show()
 
-URI = list()
-UFA = list()
+# URI = list()
+# UFA = list()
 
-t = [i*delta_t for i in range(m)]
-Cvav = np.mean(list_c_v, axis=0)
-print(len(list_U_p))
-print(len(t))
-print(Cvav)
-for t_ in t:
-    URI.append(Module.URI_UFA(t_, Cvav[1], H/2, 1000))
-    UFA.append(Module.URI_UFA(t_, Cvav[-1], H/2, 1000))
+# t = [i*delta_t for i in range(m)]
+# Cvav = np.mean(list_c_v, axis=0)
+# print(len(list_U_p))
+# print(len(t))
+# print(Cvav)
+# for t_ in t:
+#     URI.append(Module.URI_UFA(t_, Cvav[1], H/2, 1000))
+#     UFA.append(Module.URI_UFA(t_, Cvav[-1], H/2, 1000))
 
-plt.plot(t, URI, label='URI')
-plt.plot(t, list_U_p[:-1], label='list_U_p')
-plt.plot(t, UFA, label='UFA')
+# plt.plot(t, URI, label='URI')
+# plt.plot(t, list_U_p[:-1], label='list_U_p')
+# plt.plot(t, UFA, label='UFA')
 
-plt.legend()  # Add a legend to display the labels
-plt.show()
+# plt.legend()  # Add a legend to display the labels
+# plt.show()
