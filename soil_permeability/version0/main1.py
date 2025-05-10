@@ -54,47 +54,50 @@ plt.show()
 
 # 27/4/1402
 
-# calcutateD = 1
-# startTime = 5
-# Cvav = np.mean(list_c_v, axis=0)
+calcutateD = 1
+startTime = 5
+Cvav = np.mean(list_c_v, axis=0)
 
-# if calcutateD:
-#     URI = list()
-#     UFA = list()
+if calcutateD:
+    URI = list()
+    UFA = list()
 
-#     t = [i*delta_t for i in range(m)]
+    t = [i*delta_t for i in range(m)]
 
-#     for t_ in t:
-#         URI.append(Module.URI_UFA(t_, Cvav[1], H/2, 1000))
-#         UFA.append(Module.URI_UFA(t_, Cvav[-1], H/2, 1000))
+    for t_ in t:
+        URI.append(Module.URI_UFA(t_, Cvav[1], H/2, 1000))
+        UFA.append(Module.URI_UFA(t_, Cvav[-1], H/2, 1000))
 
-#     UNL = list_U_p
+    UNL = list_U_p
 
-#     Module.plt.plot(t, URI)
-#     Module.plt.xlabel('t')
-#     Module.plt.ylabel('URI')
-#     Module.plt.show()
+    plt.plot(t, URI, label='URI')
+    plt.plot(t, UFA, label='UFA')
+    plt.xlabel('t')
+    plt.ylabel('Value')
+    plt.legend()
+    plt.title('URI and UFA over Time')
+    plt.show()
 
-#     Module.plt.plot(t, UFA)
-#     Module.plt.xlabel('t')
-#     Module.plt.ylabel('UFA')
-#     Module.plt.show()
+    D = list()
+    for i in range(startTime, len(URI)):
+        D.append((UNL[i] - URI[i]) / (UFA[i] - URI[i]))
 
-#     D = list()
-#     for i in range(startTime, len(URI)):
-#         D.append((UNL[i] - URI[i]) / (UFA[i] - URI[i]))
+    plt.plot(t[startTime:], D)
+    plt.xlabel('t')
+    plt.ylabel('D')
+    plt.show()
 
-#     with open('hlvhvv.txt', 'w') as file:
-#         for item in D:
-#             file.write(str(item) + '\n')
+    with open('hlvhvv.txt', 'w') as file:
+        for item in D:
+            file.write(str(item) + '\n')
 
-#     with open('URI.txt', 'w') as file:
-#         for item in URI:
-#             file.write(str(item) + '\n')
+    with open('URI.txt', 'w') as file:
+        for item in URI:
+            file.write(str(item) + '\n')
 
-#     with open('UFA.txt', 'w') as file:
-#         for item in UFA:
-#             file.write(str(item) + '\n')
+    with open('UFA.txt', 'w') as file:
+        for item in UFA:
+            file.write(str(item) + '\n')
 
 
 # else:

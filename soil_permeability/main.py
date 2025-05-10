@@ -45,7 +45,7 @@ class Simulateion:
         print(f'a: {self.a}')
         print(f'd: {self.d}')
         print(f'bk: {self.bk}')
-        print(f'(self.a-self.bk)/self.M : {(self.a-self.bk)/self.M}')
+        print(f'(a-bk)/M : {(self.a-self.bk)/self.M}')
         print(10**((self.a-self.bk)/self.M))
         self.CV_RI = 2.3*(1+self.e0) * (10**((self.a-self.bk)/self.M)) * \
             (self.sigma0_prime**(1-self.Cc/self.M)) / (self.rw*self.Cc)
