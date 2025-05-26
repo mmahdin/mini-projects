@@ -39,7 +39,15 @@ async def fetch_rendered_section(url: str):
 
 
 def generate_pdf_from_html(html_content: str, styles: str, base_url: str, output_file: str):
-    print(html_content)
+    custom_style = """
+    .surah-name {
+        margin-left: -20px !important;
+    }
+    .surah-name-v4-icon {
+        margin-left: -20px !important;
+    }
+    """
+    full_styles = styles + custom_style
     """Generate a PDF from HTML and CSS."""
     combined_html = f"""
     <html>
