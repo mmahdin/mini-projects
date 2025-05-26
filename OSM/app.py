@@ -27,8 +27,11 @@ def load_graph(place):
 m = folium.Map(
     location=[35.968, 50.737],
     zoom_start=15,
-    tiles='OpenStreetMap'
+    tiles='OpenStreetMap',
+    width="100%",
+    height="100%"
 )
+
 
 # Add custom CSS to change cursor when hovering over map
 folium.Element(
@@ -51,11 +54,12 @@ if st.session_state.meeting_point:
         icon=folium.Icon(color='green')
     ).add_to(m)
     for route in st.session_state.routes:
-        folium.PolyLine(
-            locations=route,
-            color='blue',
-            weight=2
-        ).add_to(m)
+        if len(route) >= 2:
+            folium.PolyLine(
+                locations=route,
+                color='blue',
+                weight=2
+            ).add_to(m)
 
 # Adjust map bounds only when meeting point is calculated
 if st.session_state.meeting_point:
@@ -69,7 +73,7 @@ if st.session_state.meeting_point:
 
 # Display the map and capture clicks
 st.write("Click on the map to select up to 3 locations")
-clicked = st_folium(m, width=700, height=500)
+clicked = st_folium(m, width="100%")
 
 # Handle map clicks
 if clicked and clicked['last_clicked'] and len(st.session_state.selected_locations) < 3:
