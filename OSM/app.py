@@ -3,7 +3,6 @@ from streamlit_folium import st_folium
 import folium
 import osmnx as ox
 import networkx as nx
-import uuid
 
 # Initialize session state
 if 'selected_locations' not in st.session_state:
@@ -16,6 +15,8 @@ if 'routes' not in st.session_state:
 # Define the place
 place = "Mehestan, Alborz Province, Iran"
 
+# Cache the graph loading function
+
 
 @st.cache_data
 def load_graph(place):
@@ -25,7 +26,7 @@ def load_graph(place):
 # Create and configure the map
 m = folium.Map(
     location=[35.968, 50.737],
-    zoom_start=16,
+    zoom_start=15,
     tiles='OpenStreetMap'
 )
 
@@ -56,11 +57,10 @@ if st.session_state.meeting_point:
             weight=2
         ).add_to(m)
 
-# Adjust map bounds based on all points
-all_points = st.session_state.selected_locations + (
-    [st.session_state.meeting_point] if st.session_state.meeting_point else []
-)
-if all_points:
+# Adjust map bounds only when meeting point is calculated
+if st.session_state.meeting_point:
+    all_points = st.session_state.selected_locations + \
+        [st.session_state.meeting_point]
     min_lat = min(p[0] for p in all_points)
     max_lat = max(p[0] for p in all_points)
     min_lon = min(p[1] for p in all_points)
@@ -69,7 +69,7 @@ if all_points:
 
 # Display the map and capture clicks
 st.write("Click on the map to select up to 3 locations")
-clicked = st_folium(m, width=1000, height=600)
+clicked = st_folium(m, width=700, height=500)
 
 # Handle map clicks
 if clicked and clicked['last_clicked'] and len(st.session_state.selected_locations) < 3:
@@ -98,15 +98,32 @@ if len(st.session_state.selected_locations) == 3 and st.session_state.meeting_po
         # Store meeting point coordinates
         st.session_state.meeting_point = (
             G.nodes[best_node]['y'], G.nodes[best_node]['x'])
-        # Calculate and store routes
+        # Calculate routes
         routes = [
             nx.shortest_path(G, source=orig, target=best_node, weight="length")
             for orig in orig_nodes
         ]
+        # Function to get route geometry
+
+        def get_route_geometry(G, route):
+            route_geometry = []
+            for i in range(len(route)-1):
+                u, v = route[i], route[i+1]
+                edge_data = G[u][v][0]  # assuming the first edge if multiple
+                if 'geometry' in edge_data:
+                    geom = edge_data['geometry']
+                    points = [(lat, lon) for lon, lat in geom.coords]
+                else:
+                    points = [(G.nodes[u]['y'], G.nodes[u]['x']),
+                              (G.nodes[v]['y'], G.nodes[v]['x'])]
+                if i > 0:
+                    # skip the first point to avoid duplicates
+                    points = points[1:]
+                route_geometry.extend(points)
+            return route_geometry
+        # Store routes with detailed geometry
         st.session_state.routes = [
-            [(G.nodes[node]['y'], G.nodes[node]['x']) for node in route]
-            for route in routes
-        ]
+            get_route_geometry(G, route) for route in routes]
         st.rerun()
 
 # Display status message
