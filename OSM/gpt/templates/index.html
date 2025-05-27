@@ -40,6 +40,14 @@
       color: white;
     }
     button:hover { background: #2563eb; }
+
+    .custom-marker {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%; /* Makes it a circle */
+      border: 2px solid white;
+      box-shadow: 0 0 3px rgba(0,0,0,0.5);
+    }
   </style>
 </head>
 <body>
@@ -66,27 +74,48 @@
     let stationDestMarker = null;
     let othersGroup = L.layerGroup();
 
+    // --- Custom Icons ---
+    const stationIcon = (color) => L.divIcon({
+      html: `<div class="custom-marker" style="background-color: ${color};"></div>`,
+      className: '', // Prevent Leaflet default styling
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+      popupAnchor: [0, -10]
+    });
+
+    // Your own person icon (red, male-like silhouette)
+    const personIconRed = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/194/194935.png', // red person
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
+      className: 'red-person-icon',
+    });
+
+    // Others' person icon (orange, female/neutral silhouette)
+    const personIconOrange = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/2922/2922656.png', // orange person
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
+      className: 'orange-person-icon',
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
-      // Initialize Leaflet map
       map = L.map('map').setView([35.968, 50.737], 17);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
       }).addTo(map);
 
-      // Change cursor
       map.getContainer().style.cursor = 'crosshair';
-
-      // Handle clicks
       map.on('click', onMapClick);
 
-      // Reset button
       document.getElementById('resetBtn').onclick = () => {
         if (originMarker) { map.removeLayer(originMarker); originMarker = null; }
         if (destMarker) { map.removeLayer(destMarker); destMarker = null; }
         clickCount = 0;
       };
 
-      // Apply button
       document.getElementById('applyBtn').onclick = () => {
         if (!originMarker || !destMarker) {
           alert("Please set both origin and destination before applying.");
@@ -100,46 +129,43 @@
         });
       };
 
-      // Join our “room” so server can target us
       socket.emit('join', {});
 
-      // Handle “please_wait”
       socket.on('please_wait', (msg) => {
         alert(msg.msg);
       });
 
-      // Handle “group_assigned”
       socket.on('group_assigned', (data) => {
-        // Clear old layers
         othersGroup.clearLayers();
         if (stationOriginMarker) { map.removeLayer(stationOriginMarker); stationOriginMarker = null; }
         if (stationDestMarker) { map.removeLayer(stationDestMarker); stationDestMarker = null; }
 
-        // Plot shared pickup (blue)
-        stationOriginMarker = L.circleMarker(
+        // Shared Pickup (blue)
+        stationOriginMarker = L.marker(
           [data.station_origin.lat, data.station_origin.lng],
-          { color: 'blue', radius: 8 }
+          { icon: stationIcon("blue") }
         ).addTo(map).bindPopup("Shared Pickup Station");
 
-        // Plot shared drop-off (green)
-        stationDestMarker = L.circleMarker(
+        // Shared Drop-off (green)
+        stationDestMarker = L.marker(
           [data.station_destination.lat, data.station_destination.lng],
-          { color: 'green', radius: 8 }
+          { icon: stationIcon("green") }
         ).addTo(map).bindPopup("Shared Drop-off Station");
 
-        // Plot the other two users’ points
+        // Other users (orange person icon B)
         data.others.forEach((u, idx) => {
           const o = u.origin;
           const d = u.destination;
-          L.circleMarker([o.lat, o.lng], { color: 'red', radius: 6 })
+          L.marker([o.lat, o.lng], { icon: personIconOrange })
             .addTo(othersGroup)
-            .bindPopup(`User ${idx+1} origin`);
-          L.circleMarker([d.lat, d.lng], { color: 'orange', radius: 6 })
+            .bindPopup(`User ${idx + 1} Origin`);
+          L.marker([d.lat, d.lng], { icon: personIconOrange })
             .addTo(othersGroup)
-            .bindPopup(`User ${idx+1} destination`);
+            .bindPopup(`User ${idx + 1} Destination`);
         });
+
         othersGroup.addTo(map);
-        alert("You have been grouped! See shared stations (blue/green) and other users (red/orange).");
+        alert("You have been grouped! See shared stations and other users.");
       });
     });
 
@@ -147,16 +173,19 @@
       const { lat, lng } = e.latlng;
       if (clickCount === 0) {
         if (originMarker) map.removeLayer(originMarker);
-        originMarker = L.marker([lat, lng]).addTo(map)
+        originMarker = L.marker([lat, lng], { icon: personIconRed }).addTo(map)
           .bindPopup("Your Origin").openPopup();
         clickCount++;
       } else if (clickCount === 1) {
         if (destMarker) map.removeLayer(destMarker);
-        destMarker = L.marker([lat, lng]).addTo(map)
+        destMarker = L.marker([lat, lng], { icon: personIconRed }).addTo(map)
           .bindPopup("Your Destination").openPopup();
         clickCount++;
       }
     }
+  </script>
+
+
   </script>
 </body>
 </html>
