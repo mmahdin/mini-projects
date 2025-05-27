@@ -1,0 +1,243 @@
+<!-- templates/user.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ride-Sharing Simulator – User {{ user_id }}</title>
+
+  <!-- LEAFLET CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+    #map {
+      width: 100%;
+      height: 80vh; /* 80% of viewport height so you can see controls below */
+      cursor: crosshair;
+    }
+    #controls {
+      padding: 10px;
+      text-align: center;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 0 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align: center; margin-top: 10px;">
+    Ride-Sharing Simulator – User {{ user_id }}
+  </h2>
+
+  <div id="map"></div>
+
+  <div id="controls">
+    <button id="resetBtn">Reset</button>
+    <button id="applyBtn">Apply</button>
+  </div>
+
+  <!-- LEAFLET JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- SOCKET.IO CLIENT -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+
+  <script>
+    // ==== 1. Extract user_id from the Flask template variable ====
+    const USER_ID = "{{ user_id }}";
+
+    // ==== 2. Randomly assign this user's gender + rate on first load ====
+    const possibleGenders = ["male", "female", "other"];
+    const GENDER = possibleGenders[Math.floor(Math.random() * possibleGenders.length)];
+    const RATE = (Math.random() * 5).toFixed(1); // e.g. "3.7"
+
+    // ==== 3. Initialize Leaflet map, centered at 35.968, 50.737 with chosen zoom ====
+    document.addEventListener('DOMContentLoaded', function() {
+      const map = L.map('map').setView([35.968, 50.737], 17);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Change cursor on hover
+      map.on('mouseover', function() {
+        map.getContainer().style.cursor = 'pointer';
+      });
+      map.on('mouseout', function() {
+        map.getContainer().style.cursor = 'crosshair';
+      });
+
+      // ==== 4. Variables to track markers and click count ====
+      let originMarker = null,
+          destMarker = null,
+          clickCount = 0;
+
+      // Layer group for nearby users
+      const nearbyLayerGroup = L.layerGroup().addTo(map);
+
+      // Markers for central station (once computed)
+      let stationOriginMarker = null,
+          stationDestMarker = null;
+
+      // ==== 5. Handle map clicks for origin/destination ====
+      map.on('click', function(event) {
+        const { lat, lng } = event.latlng;
+        clickCount += 1;
+
+        if (clickCount === 1) {
+          // Place the origin marker
+          if (originMarker) {
+            map.removeLayer(originMarker);
+          }
+          originMarker = L.marker([lat, lng], {
+            icon: L.icon({
+              iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34]
+            })
+          }).addTo(map).bindPopup('Your Origin');
+        } else if (clickCount === 2) {
+          // Place the destination marker
+          if (destMarker) {
+            map.removeLayer(destMarker);
+          }
+          destMarker = L.marker([lat, lng], {
+            icon: L.icon({
+              iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-red.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34]
+            })
+          }).addTo(map).bindPopup('Your Destination');
+        } else {
+          // Ignore further clicks until Reset
+          clickCount = 2;
+        }
+      });
+
+      // ==== 6. “Reset” button clears markers and layers ====
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        if (originMarker) {
+          map.removeLayer(originMarker);
+          originMarker = null;
+        }
+        if (destMarker) {
+          map.removeLayer(destMarker);
+          destMarker = null;
+        }
+        clickCount = 0;
+
+        nearbyLayerGroup.clearLayers();
+        if (stationOriginMarker) {
+          map.removeLayer(stationOriginMarker);
+          stationOriginMarker = null;
+        }
+        if (stationDestMarker) {
+          map.removeLayer(stationDestMarker);
+          stationDestMarker = null;
+        }
+      });
+
+      // ==== 7. Initialize Socket.IO client ====
+      const socket = io();
+
+      socket.on('connect', () => {
+        console.log('Connected to server via Socket.IO');
+      });
+
+      // ==== 8. Handle “near_users” event from server ====
+      socket.on('near_users', (payload) => {
+        // payload = { near_users: [ { user_id, origin: [lat,lng], gender, rate }, ... ] }
+        nearbyLayerGroup.clearLayers();
+
+        payload.near_users.forEach((u) => {
+          const [ulat, ulng] = u.origin;
+          const marker = L.marker([ulat, ulng], {
+            icon: L.icon({
+              iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-blue.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34]
+            })
+          })
+            .addTo(nearbyLayerGroup)
+            .bindPopup(`User ${u.user_id}<br>Gender: ${u.gender}<br>Rate: ${u.rate}`);
+
+          marker.on('click', function() {
+            this.openPopup();
+          });
+        });
+      });
+
+      // ==== 9. Handle “station” event from server ====
+      socket.on('station', (payload) => {
+        // payload = { origin: [lat, lng], destination: [lat, lng] }
+        const [s_lat, s_lng] = payload.origin;
+        const [d_lat, d_lng] = payload.destination;
+
+        if (stationOriginMarker) {
+          map.removeLayer(stationOriginMarker);
+        }
+        if (stationDestMarker) {
+          map.removeLayer(stationDestMarker);
+        }
+
+        stationOriginMarker = L.marker([s_lat, s_lng], {
+          icon: L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-green.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34]
+          })
+        })
+          .addTo(map)
+          .bindPopup('Central Origin');
+
+        stationDestMarker = L.marker([d_lat, d_lng], {
+          icon: L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-red.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34]
+          })
+        })
+          .addTo(map)
+          .bindPopup('Central Destination');
+      });
+
+      // ==== 10. “Apply” button sends data to server ====
+      document.getElementById('applyBtn').addEventListener('click', () => {
+        if (!originMarker || !destMarker) {
+          alert('Please specify both Origin and Destination by clicking twice on the map.');
+          return;
+        }
+
+        const oLatLng = originMarker.getLatLng();
+        const dLatLng = destMarker.getLatLng();
+
+        socket.emit('apply', {
+          user_id: USER_ID,
+          origin: [oLatLng.lat, oLatLng.lng],
+          destination: [dLatLng.lat, dLatLng.lng],
+          gender: GENDER,
+          rate: RATE
+        });
+      });
+    });
+  </script>
+</body>
+</html>
