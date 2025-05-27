@@ -165,6 +165,24 @@
         });
 
         othersGroup.addTo(map);
+
+        // Draw the accurate path between Shared Pickup and Drop-off
+        if (window.sharedRouteLine) {
+          map.removeLayer(window.sharedRouteLine);
+        }
+
+        const routeLatLngs = data.shared_route.map(pt => [pt.lat, pt.lng]);
+
+        window.sharedRouteLine = L.polyline(routeLatLngs, {
+          color: 'purple',
+          weight: 4,
+          opacity: 0.8
+        }).addTo(map);
+
+        // Optionally fit map to route
+        map.fitBounds(window.sharedRouteLine.getBounds());
+
+        
         alert("You have been grouped! See shared stations and other users.");
       });
     });

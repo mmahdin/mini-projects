@@ -165,11 +165,41 @@ def handle_apply_request(data):
             G, dest, weight="length")
         for node, dist in dist_map.items():
             total_dist_d[node] += dist
+
     meet_d_node = min(total_dist_d, key=total_dist_d.get)
     meet_d_latlon = {
         'lat': G.nodes[meet_d_node]['y'],
         'lng': G.nodes[meet_d_node]['x']
     }
+
+    def get_route_geometry(G, route):
+        route_geometry = []
+        for i in range(len(route)-1):
+            u, v = route[i], route[i+1]
+            edge_data = G.get_edge_data(u, v)
+            if edge_data is None:
+                continue
+            edge = edge_data[0]  # take first edge if multiple
+            if 'geometry' in edge:
+                geom = edge['geometry']
+                points = [(lat, lon) for lon, lat in geom.coords]
+            else:
+                points = [(G.nodes[u]['y'], G.nodes[u]['x']),
+                          (G.nodes[v]['y'], G.nodes[v]['x'])]
+            if i > 0:
+                points = points[1:]  # skip duplicate
+            route_geometry.extend(points)
+        return route_geometry
+
+    # Compute node route
+    route_nodes = nx.shortest_path(
+        G, meet_o_node, meet_d_node, weight='length')
+
+    # Get high-precision geometry from edges
+    route_geometry = get_route_geometry(G, route_nodes)
+
+    # Convert to format for frontend
+    shared_route = [{'lat': lat, 'lng': lng} for lat, lng in route_geometry]
 
     # Broadcast group assignment
     for u in group:
@@ -184,7 +214,8 @@ def handle_apply_request(data):
         payload = {
             'station_origin': meet_o_latlon,
             'station_destination': meet_d_latlon,
-            'others': other_users
+            'others': other_users,
+            'shared_route': shared_route  # precise path
         }
         socketio.emit('group_assigned', payload, room=u['sid'])
 
