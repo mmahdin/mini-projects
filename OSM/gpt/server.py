@@ -156,9 +156,8 @@ def handle_apply_request(data):
 
     # Meeting destination
     latlons_d = [u['destination'] for u in group]
-    dest_nodes = [
-        ox.distance.nearest_nodes(G, lon, lat) for lat, lon in latlons_d
-    ]
+    dest_nodes = [ox.distance.nearest_nodes(
+        G, lon, lat) for lat, lon in latlons_d]
     total_dist_d = {node: 0.0 for node in G.nodes}
     for dest in dest_nodes:
         dist_map = nx.single_source_dijkstra_path_length(
@@ -172,6 +171,11 @@ def handle_apply_request(data):
         'lng': G.nodes[meet_d_node]['x']
     }
 
+    # Origin and destination nodes for group
+    orig_nodes = [ox.distance.nearest_nodes(
+        G, lon, lat) for lat, lon in latlons_o]
+
+    # Use same helper function as before
     def get_route_geometry(G, route):
         route_geometry = []
         for i in range(len(route)-1):
@@ -179,7 +183,7 @@ def handle_apply_request(data):
             edge_data = G.get_edge_data(u, v)
             if edge_data is None:
                 continue
-            edge = edge_data[0]  # take first edge if multiple
+            edge = edge_data[0]
             if 'geometry' in edge:
                 geom = edge['geometry']
                 points = [(lat, lon) for lon, lat in geom.coords]
@@ -187,7 +191,7 @@ def handle_apply_request(data):
                 points = [(G.nodes[u]['y'], G.nodes[u]['x']),
                           (G.nodes[v]['y'], G.nodes[v]['x'])]
             if i > 0:
-                points = points[1:]  # skip duplicate
+                points = points[1:]
             route_geometry.extend(points)
         return route_geometry
 
@@ -200,6 +204,26 @@ def handle_apply_request(data):
 
     # Convert to format for frontend
     shared_route = [{'lat': lat, 'lng': lng} for lat, lng in route_geometry]
+
+    # Routes to shared pickup
+    routes_to_pickup = [
+        get_route_geometry(G, nx.shortest_path(
+            G, orig, meet_o_node, weight="length"))
+        for orig in orig_nodes
+    ]
+
+    # Routes from shared drop-off
+    routes_from_dropoff = [
+        get_route_geometry(G, nx.shortest_path(
+            G, meet_d_node, dest, weight="length"))
+        for dest in dest_nodes
+    ]
+
+    # Format for frontend
+    pickup_routes = [[{'lat': lat, 'lng': lng}
+                      for lat, lng in route] for route in routes_to_pickup]
+    dropoff_routes = [[{'lat': lat, 'lng': lng}
+                       for lat, lng in route] for route in routes_from_dropoff]
 
     # Broadcast group assignment
     for u in group:
@@ -215,7 +239,9 @@ def handle_apply_request(data):
             'station_origin': meet_o_latlon,
             'station_destination': meet_d_latlon,
             'others': other_users,
-            'shared_route': shared_route  # precise path
+            'shared_route': shared_route,
+            'pickup_routes': pickup_routes,
+            'dropoff_routes': dropoff_routes
         }
         socketio.emit('group_assigned', payload, room=u['sid'])
 

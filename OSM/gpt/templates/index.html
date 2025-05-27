@@ -111,9 +111,47 @@
       map.on('click', onMapClick);
 
       document.getElementById('resetBtn').onclick = () => {
-        if (originMarker) { map.removeLayer(originMarker); originMarker = null; }
-        if (destMarker) { map.removeLayer(destMarker); destMarker = null; }
+        // Remove your own markers
+        if (originMarker) {
+          map.removeLayer(originMarker);
+          originMarker = null;
+        }
+        if (destMarker) {
+          map.removeLayer(destMarker);
+          destMarker = null;
+        }
         clickCount = 0;
+
+        // Remove shared pickup/drop-off markers
+        if (stationOriginMarker) {
+          map.removeLayer(stationOriginMarker);
+          stationOriginMarker = null;
+        }
+        if (stationDestMarker) {
+          map.removeLayer(stationDestMarker);
+          stationDestMarker = null;
+        }
+
+        // Remove others' markers
+        othersGroup.clearLayers();
+
+        // Remove shared route line
+        if (window.sharedRouteLine) {
+          map.removeLayer(window.sharedRouteLine);
+          window.sharedRouteLine = null;
+        }
+
+        // Remove all pickup route lines
+        if (window.pickupRouteLines) {
+          window.pickupRouteLines.forEach(line => map.removeLayer(line));
+          window.pickupRouteLines = [];
+        }
+
+        // Remove all dropoff route lines
+        if (window.dropoffRouteLines) {
+          window.dropoffRouteLines.forEach(line => map.removeLayer(line));
+          window.dropoffRouteLines = [];
+        }
       };
 
       document.getElementById('applyBtn').onclick = () => {
@@ -178,6 +216,41 @@
           weight: 4,
           opacity: 0.8
         }).addTo(map);
+
+        // Cleanup previous lines if any
+        if (window.pickupRouteLines) {
+          window.pickupRouteLines.forEach(line => map.removeLayer(line));
+        }
+        if (window.dropoffRouteLines) {
+          window.dropoffRouteLines.forEach(line => map.removeLayer(line));
+        }
+        window.pickupRouteLines = [];
+        window.dropoffRouteLines = [];
+
+        // Draw all pickup routes
+        data.pickup_routes.forEach((route, idx) => {
+          const latlngs = route.map(pt => [pt.lat, pt.lng]);
+          const line = L.polyline(latlngs, {
+            color: 'blue',
+            weight: 2,
+            opacity: 0.6,
+            dashArray: '3, 6'
+          }).addTo(map);
+          window.pickupRouteLines.push(line);
+        });
+
+        // Draw all dropoff routes
+        data.dropoff_routes.forEach((route, idx) => {
+          const latlngs = route.map(pt => [pt.lat, pt.lng]);
+          const line = L.polyline(latlngs, {
+            color: 'green',
+            weight: 2,
+            opacity: 0.6,
+            dashArray: '3, 6'
+          }).addTo(map);
+          window.dropoffRouteLines.push(line);
+        });
+
 
         // Optionally fit map to route
         map.fitBounds(window.sharedRouteLine.getBounds());
