@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Ride-Sharing Simulator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Leaflet CSS (no integrity attributes) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    #map {
+      width: 100%;
+      height: 90vh;
+      background: lightgray; /* temporary debugging background */
+    }
+    #controls {
+      height: 10vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f2f2f2;
+    }
+    button {
+      margin: 0 10px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #3b82f6;
+      color: white;
+    }
+    button:hover { background: #2563eb; }
+
+    .custom-marker {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%; /* Makes it a circle */
+      border: 2px solid white;
+      box-shadow: 0 0 3px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="controls">
+    <button id="applyBtn">Apply</button>
+  </div>
+
+  <!-- Socket.IO (no integrity attributes) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+
+  <!-- Leaflet JS (no integrity attributes) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    const socket = io();
+
+    let map;
+    let originMarker = null;
+    let destMarker = null;
+    let clickCount = 0;
+    let closePerson = 0;
+    let userMarkers = [];
+    let deletedMarkerLocations = [];
+
+    // Your own person icon (red, male-like silhouette)
+    const personIconRed = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/194/194935.png', // red person
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
+      className: 'red-person-icon',
+    });
+
+    const personIconOrange = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/2922/2922656.png', // orange person
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
+      className: 'orange-person-icon',
+    });
+
+    // Icon for origin location (e.g., blue map pin)
+    const originIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.freepik.com/512/7711/7711464.png', // Blue map marker
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
+      className: 'origin-icon'
+    });
+
+    // Icon for destination location (e.g., red map pin)
+    const destinationIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/11529/11529542.png', // Red map marker
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
+      className: 'destination-icon'
+    });
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+      map = L.map('map').setView([35.968, 50.737], 17);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+      }).addTo(map);
+
+      map.getContainer().style.cursor = 'crosshair';
+      map.on('click', onMapClick);
+
+      document.getElementById('applyBtn').onclick = () => {
+        if (!originMarker || !destMarker) {
+          alert("Please set both origin and destination before applying.");
+          return;
+        }
+        const o = originMarker.getLatLng();
+        const d = destMarker.getLatLng();
+        socket.emit('apply_request', {
+          origin: { lat: o.lat, lng: o.lng },
+          destination: { lat: d.lat, lng: d.lng }
+        });
+      };
+
+      socket.emit('join', {});
+
+      socket.on('please_wait', (msg) => {
+        alert(msg.msg);
+      });
+
+      socket.on('group_assigned', (data) => {       
+        alert("You have been grouped! See shared stations and other users.");
+      });
+
+      // Handle simulated people
+      socket.on('notify_user', (data) => {
+        const { origin, destination } = data;
+
+        const originM = L.marker([origin.lat, origin.lng], { icon: originIcon }).addTo(map)
+          .bindPopup("Origin" + closePerson).openPopup();
+        addDeleteHandler(originM, origin.lat, origin.lng);
+        userMarkers.push(originM);
+
+        const destM = L.marker([destination.lat, destination.lng], { icon: destinationIcon }).addTo(map)
+          .bindPopup("Destination" + closePerson).openPopup();
+        addDeleteHandler(destM, destination.lat, destination.lng);
+        userMarkers.push(destM);
+
+        closePerson++;
+      });
+
+      socket.on('ask_for_confirm', () => {
+        const applyBtn = document.getElementById('applyBtn');
+        applyBtn.textContent = 'Confirm';
+      });
+    });
+
+
+    function addDeleteHandler(marker, lat, lng) {
+      marker.on('click', () => {
+        if (confirm("Delete this marker?")) {
+          map.removeLayer(marker);
+          deletedMarkerLocations.push({ lat, lng });
+          // Optionally, send it to the server
+          socket.emit('marker_deleted', { lat, lng });
+        }
+      });
+    }
+
+
+    function onMapClick(e) {
+      const { lat, lng } = e.latlng;
+      if (clickCount === 0) {
+        if (originMarker) map.removeLayer(originMarker);
+        originMarker = L.marker([lat, lng], { icon: personIconRed }).addTo(map)
+          .bindPopup("Your Origin").openPopup();
+        clickCount++;
+      } else if (clickCount === 1) {
+        if (destMarker) map.removeLayer(destMarker);
+        destMarker = L.marker([lat, lng], { icon: personIconRed }).addTo(map)
+          .bindPopup("Your Destination").openPopup();
+        clickCount++;
+      }
+    }
+  </script>
+
+
+  </script>
+</body>
+</html>

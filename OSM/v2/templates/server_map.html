@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Server Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <style>
+    html, body { margin: 0; height: 100%; }
+    #map { height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const socket = io();
+    const map = L.map('map').setView([35.968, 50.737], 17);
+    let clickCount = 0;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    const userIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/194/194935.png',
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30]
+    });
+
+    const personIconOrange = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/2922/2922656.png', // orange person
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
+      className: 'orange-person-icon',
+    });
+
+    // Icon for origin location (e.g., blue map pin)
+    const originIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.freepik.com/512/7711/7711464.png', // Blue map marker
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
+      className: 'origin-icon'
+    });
+
+    // Icon for destination location (e.g., red map pin)
+    const destinationIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/11529/11529542.png', // Red map marker
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
+      className: 'destination-icon'
+    });
+
+
+    // Handle user marker
+    socket.on('user_marker', (data) => {
+      // Origin marker
+      L.marker([data.originlat, data.originlng], { icon: userIcon })
+        .addTo(map)
+        .bindPopup("User Origin")
+        .openPopup();
+
+      // Destination marker
+      L.marker([data.destinationlat, data.destinationlng], { icon: userIcon })
+        .addTo(map)
+        .bindPopup("User Destination")
+        .openPopup();
+    });
+
+    // Handle simulated people
+    socket.on('add_person', (data) => {
+      const { origin, destination } = data;
+
+      L.marker([origin.lat, origin.lng], { icon: originIcon })
+        .addTo(map)
+        .bindPopup("Origin " + clickCount)
+        .openPopup();
+
+      // Destination marker
+      L.marker([destination.lat, destination.lng], { icon: destinationIcon })
+        .addTo(map)
+        .bindPopup("Destination " + clickCount)
+        .openPopup();
+
+        clickCount ++;
+
+    });
+  </script>
+</body>
+</html>
