@@ -115,6 +115,7 @@
     <button id="regroupBtn" style="display: none; background-color: red;">Regroup</button>
     <button id="confirmBtn" style="display: none; background-color: green;">Confirm</button>
     <button id="scheduleBtn" style="display: inline-block; background-color: #007bff; color: white;">Schedule List</button>
+    <button id="resetBtn" style="display: none; background-color: gray; color: white;">Reset</button>
   </div>
 
   <div id="schedulePanel" style="color: red;">
@@ -209,6 +210,9 @@
       map.on('click', onMapClick);
 
 
+      document.getElementById('resetBtn').onclick = resetAll;
+
+
       document.getElementById('scheduleBtn').onclick = () => {
         const panel = document.getElementById('schedulePanel');
         panel.classList.toggle('open');
@@ -229,6 +233,7 @@
             <div><strong>To:</strong> <span>${item.destination}</span></div>
             <div><strong>Total Saves:</strong> <span>${item.savedUsers}</span></div>
             <div><strong>Online Users:</strong> <span>${item.onlineUsers}</span></div>
+            <div><strong>Time:</strong> <span>${item.time}</span></div>
           `;
 
           // Set lat/lng as data attributes
@@ -276,6 +281,8 @@
           alert("Please set both origin and destination before applying.");
           return;
         }
+
+        document.getElementById('resetBtn').style.display = 'inline-block';
 
         document.getElementById('scheduleBtn').style.display = 'none';
         document.getElementById('schedulePanel').classList.remove('open');
@@ -418,12 +425,46 @@
           clickCount++;
         }
       });
+    }
 
-      // Optional: handle errors
-      socket.once("snap_error", (errorMsg) => {
-        console.error("Snap error:", errorMsg);
-        alert("Failed to snap to road.");
-      });
+    function resetAll() {
+      // Remove user markers
+      if (originMarker) map.removeLayer(originMarker);
+      if (destMarker) map.removeLayer(destMarker);
+      originMarker = null;
+      destMarker = null;
+
+      // Remove other simulated markers
+      otherMarkers.forEach(marker => map.removeLayer(marker));
+      otherMarkers.length = 0;
+
+      // Remove routing markers and polylines
+      routingMarkers.forEach(marker => map.removeLayer(marker));
+      routingMarkers.length = 0;
+
+      routingPolylines.forEach(polyline => map.removeLayer(polyline));
+      routingPolylines.length = 0;
+
+      // Reset marker data
+      markerData.user.origin = null;
+      markerData.user.destination = null;
+      markerData.others = [];
+
+      // Reset UI buttons
+      document.getElementById('applyBtn').style.display = 'none';
+      document.getElementById('regroupBtn').style.display = 'none';
+      document.getElementById('confirmBtn').style.display = 'none';
+      document.getElementById('scheduleBtn').style.display = 'inline-block';
+
+      // Reset counters
+      clickCount = 0;
+      closePerson = 0;
+
+      // Optional: close any open popups or schedule panel
+      // map.closePopup();
+      // document.getElementById('schedulePanel')?.classList.remove('open');
+
+      socket.emit("reset", clickCount);
     }
 
   </script>

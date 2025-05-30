@@ -267,6 +267,7 @@ def on_user_location(data):
                      'destination': {'lat': lat_d, 'lng': lng_d}}
     user_locations.append(data)
     socketio.emit('user_marker', data)
+    start_simulation()
 
 
 @socketio.on('regroup_request')
@@ -339,6 +340,20 @@ def on_confirm_request(data):
             }
         }
     })
+
+
+@socketio.on('reset')
+def on_reset(data):
+    global user_locations, simulated_people, found_close_people, prev_locations, all_persons, user_location, ofstv, SIMULATION_RUNNING
+    socketio.emit('reset', data)
+    user_locations.clear()
+    simulated_people.clear()
+    found_close_people.clear()
+    prev_locations.clear()
+    all_persons.clear()
+    user_location.clear()
+    ofstv = 0.0005
+    SIMULATION_RUNNING = True
 
 
 @app.route('/')

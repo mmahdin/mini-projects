@@ -22,6 +22,7 @@
     const socket = io();
     const map = L.map('map').setView([35.972447, 50.732428], 17);
     let clickCount = 0;
+    let allMarkers = []; // Keep track of all added markers
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19
@@ -63,36 +64,46 @@
 
     // Handle user marker
     socket.on('user_marker', (data) => {
-      // Origin marker
-      L.marker([data.originlat, data.originlng], { icon: userIcon })
+      const originMarker = L.marker([data.originlat, data.originlng], { icon: userIcon })
         .addTo(map)
         .bindPopup("User Origin")
         .openPopup();
+      allMarkers.push(originMarker);
 
-      // Destination marker
-      L.marker([data.destinationlat, data.destinationlng], { icon: userIcon })
+      const destinationMarker = L.marker([data.destinationlat, data.destinationlng], { icon: userIcon })
         .addTo(map)
         .bindPopup("User Destination")
         .openPopup();
+      allMarkers.push(destinationMarker);
     });
 
     // Handle simulated people
     socket.on('add_person', (data) => {
       const { origin, destination } = data;
 
-      L.marker([origin.lat, origin.lng], { icon: originIcon })
+      const originMarker = L.marker([origin.lat, origin.lng], { icon: originIcon })
         .addTo(map)
         .bindPopup("Origin " + clickCount)
         .openPopup();
+      allMarkers.push(originMarker);
 
-      // Destination marker
-      L.marker([destination.lat, destination.lng], { icon: destinationIcon })
+      const destinationMarker = L.marker([destination.lat, destination.lng], { icon: destinationIcon })
         .addTo(map)
         .bindPopup("Destination " + clickCount)
         .openPopup();
+      allMarkers.push(destinationMarker);
 
-        clickCount ++;
+      clickCount++;
+    });
 
+    // Reset everything
+    socket.on('reset', () => {
+      // Remove all markers
+      allMarkers.forEach(marker => map.removeLayer(marker));
+      allMarkers = [];
+
+      // Reset counter
+      clickCount = 0;
     });
   </script>
 </body>

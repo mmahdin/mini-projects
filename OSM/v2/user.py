@@ -103,6 +103,11 @@ def on_join(data):
     join_room(sid)
 
 
+@socketio.on('reset')
+def on_reset(data):
+    server_socket.emit('reset', data)
+
+
 def snap_to_nearest_road(lat, lng):
     try:
         nearest_node = ox.distance.nearest_nodes(G, lng, lat)
@@ -153,8 +158,8 @@ def handle_schedule_request():
                 'origin_lng': lng_o,
                 'dest_lat': lat_d,
                 'dest_lng': lng_d,
+                'time': row.get('Time', '')
             })
-
     emit('schedule_data', data)
 
 
