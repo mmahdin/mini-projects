@@ -113,6 +113,15 @@
       className: 'destination-icon'
     });
 
+    // Icon for destination location (e.g., red map pin)
+    const sharedIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/2196/2196761.png', // Red map marker
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
+      className: 'destination-icon'
+    });
+
 
     document.addEventListener('DOMContentLoaded', () => {
       map = L.map('map').setView([35.968, 50.737], 17);
@@ -190,6 +199,49 @@
       document.getElementById('confirmBtn').onclick = () => {
         socket.emit('confirm_request', markerData); // Send data
       };
+
+
+      socket.on('routing', (data) => {
+        const { shared_origin, shared_destination, routes } = data;
+
+        // Add shared origin marker
+        const sharedOriginMarker = L.marker([shared_origin.lat, shared_origin.lng], {
+          icon: sharedIcon
+        }).addTo(map).bindPopup("Shared Origin");
+
+        // Add shared destination marker
+        const sharedDestMarker = L.marker([shared_destination.lat, shared_destination.lng], {
+          icon: sharedIcon
+        }).addTo(map).bindPopup("Shared Destination");
+
+        // Draw routes from each user origin to shared origin
+        routes.user_to_shared_origin.forEach((route) => {
+          const latlngs = route.geometry.map(coord => [coord[1], coord[0]]);
+          const distanceKm = (route.distance / 1000).toFixed(2);
+          const durationMin = Math.ceil(route.duration / 60);
+
+          const polyline = L.polyline(latlngs, { color: 'blue' }).addTo(map);
+          polyline.bindPopup(`User ${route.user_id} → Shared Origin<br>${distanceKm} km<br>${durationMin} min`);
+        });
+
+        // Draw route from shared origin to shared destination
+        const sharedPath = routes.shared_origin_to_shared_destination;
+        const sharedLatLngs = sharedPath.geometry.map(coord => [coord[1], coord[0]]);
+        const sharedPolyline = L.polyline(sharedLatLngs, { color: 'green', weight: 4 }).addTo(map);
+        const sharedDistKm = (sharedPath.distance / 1000).toFixed(2);
+        const sharedDurMin = Math.ceil(sharedPath.duration / 60);
+        sharedPolyline.bindPopup(`Shared Origin → Shared Destination<br>${sharedDistKm} km<br>${sharedDurMin} min`);
+
+        // Draw routes from each user destination to shared destination
+        routes.user_to_shared_destination.forEach((route) => {
+          const latlngs = route.geometry.map(coord => [coord[1], coord[0]]);
+          const distanceKm = (route.distance / 1000).toFixed(2);
+          const durationMin = Math.ceil(route.duration / 60);
+
+          const polyline = L.polyline(latlngs, { color: 'red' }).addTo(map);
+          polyline.bindPopup(`User ${route.user_id} → Shared Destination<br>${distanceKm} km<br>${durationMin} min`);
+        });
+      });
 
     });
 

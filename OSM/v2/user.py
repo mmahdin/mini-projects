@@ -83,6 +83,11 @@ def handle_apply_request(markerData):
     server_socket.emit('confirm_request', markerData)
 
 
+@server_socket.on('routing')
+def handle_routing(data):
+    socketio.emit('routing', data)
+
+
 @socketio.on('join')
 def on_join(data):
     sid = request.sid
