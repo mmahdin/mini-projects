@@ -1,3 +1,7 @@
+from osmnx import graph
+from shapely.geometry import Point
+import networkx as nx
+import osmnx as ox
 import numpy as np
 import openrouteservice
 from itertools import product
@@ -32,6 +36,8 @@ user_locations = []
 simulated_people = []
 found_close_people = []
 prev_locations = []
+all_persons = []
+user_location = {}
 
 SIMULATION_RUNNING = True
 ofstv = 0.0005
@@ -39,23 +45,22 @@ ofstv = 0.0005
 LAT_RANGE = (35.95, 35.98)   # Example: Mehestan, Iran
 LNG_RANGE = (50.72, 50.75)
 
-MIN_DISTANCE = 0.0005
+MIN_DISTANCE = 0.0001
 MIN_DISTANCE_UNIQUE = 0.00001
 DISTANCE_THRESHOLD_METERS = 500
 
+place = "Mehestan, Alborz Province, Iran"
+G = ox.graph_from_place(place, network_type="walk")
 
-def snap_to_nearest_road(lat, lng):
-    url = f"http://router.project-osrm.org/nearest/v1/driving/{lng},{lat}"
+
+def snap_to_nearest_road(lat, lng, network_type='walk'):
     try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            if data['waypoints']:
-                snapped = data['waypoints'][0]['location']
-                return {"lat": snapped[1], "lng": snapped[0]}
+        nearest_node = ox.distance.nearest_nodes(G, lng, lat)
+        snapped_point = G.nodes[nearest_node]
+        return {'lat': snapped_point['y'], 'lng': snapped_point['x']}
     except Exception as e:
         print(f"Snap failed: {e}")
-    return {"lat": lat, "lng": lng}  # Fallback
+        return {'lat': lat, 'lng': lng}  # Fallback
 
 
 def is_far_enough(new_loc, existing_people):
@@ -78,32 +83,39 @@ def is_unique(new_loc, existing_people):
     return True
 
 
+def get_offset_patterns(ofst):
+    offset_patterns = [
+        [-ofst, ofst, -ofst, ofst],
+        [ofst, ofst, ofst, ofst],
+        [-ofst, -ofst, -ofst, -ofst],
+        [ofst, -ofst, ofst, -ofst],
+        [0, ofst, 0, ofst],
+        [ofst, 0, ofst, 0],
+        [-ofst, 0, -ofst, 0],
+        [0, -ofst, 0, -ofst],
+    ]
+    return offset_patterns
+
+
 def start_simulation():
     def simulation_loop():
         cnt = 0
-        global ofstv, SIMULATION_RUNNING, simulated_people, prev_locations
-
-        offset_patterns = [
-            [-ofstv, ofstv, -ofstv, ofstv],
-            [ofstv, ofstv, ofstv, ofstv],
-            [-ofstv, -ofstv, -ofstv, -ofstv],
-            [ofstv, -ofstv, ofstv, -ofstv],
-            [0, ofstv, 0, ofstv],
-            [ofstv, 0, ofstv, 0],
-            [-ofstv, 0, -ofstv, 0],
-            [0, -ofstv, 0, -ofstv],
-        ]
+        global ofstv, SIMULATION_RUNNING, prev_locations, all_persons
+        increaseby = 0.0001
+        pnum = 5
 
         while SIMULATION_RUNNING:
             if not user_locations:
                 socketio.sleep(1)
                 continue
 
+            offset_patterns = get_offset_patterns(ofstv)
+
             user = user_locations[0]
             lat_o, lng_o = user['originlat'], user['originlng']
             lat_d, lng_d = user['destinationlat'], user['destinationlng']
 
-            offsets = offset_patterns[cnt]
+            offsets = offset_patterns[cnt % len(offset_patterns)]
             candidate_origin = snap_to_nearest_road(
                 lat_o + offsets[0], lng_o + offsets[1])
             candidate_destination = snap_to_nearest_road(
@@ -114,32 +126,72 @@ def start_simulation():
                 "destination": candidate_destination
             }
 
-            if is_unique(candidate_origin, prev_locations) and \
-               is_unique(candidate_destination, prev_locations) and \
-               is_far_enough(candidate_origin, simulated_people) and \
-               is_far_enough(candidate_destination, simulated_people):
-                simulated_people.append(person)
-
+            if is_far_enough(candidate_origin, all_persons + [user_location]) and \
+               is_far_enough(candidate_destination, all_persons + [user_location]):
+                all_persons.append(person)
                 socketio.emit('add_person', person)
-                socketio.emit('notify_user', person)
-
-                if len(simulated_people) == 2:
-                    socketio.emit('close_people_found', simulated_people)
-                    SIMULATION_RUNNING = False
-                    simulated_people.clear()
-                    return
 
             cnt += 1
-            if cnt >= len(offset_patterns):
+            if cnt % len(offset_patterns) == 0:
+                ofstv += increaseby
+            if cnt >= pnum * len(offset_patterns):
+                print(all_persons)
                 SIMULATION_RUNNING = False
-                simulated_people.clear()
+                closest_users()
                 return
 
-            socketio.sleep(0.1)
+            # socketio.sleep(0.1)
 
     thread = threading.Thread(target=simulation_loop)
     thread.daemon = True
     thread.start()
+
+
+def closest_users():
+    def get_node(lat, lng):
+        return ox.distance.nearest_nodes(G, lng, lat)
+
+    user = user_locations[0]
+    lat_o, lng_o = user['originlat'], user['originlng']
+    lat_d, lng_d = user['destinationlat'], user['destinationlng']
+    origin_main = get_node(lat_o, lng_o)
+    destination_main = get_node(lat_d, lng_d)
+
+    distances = []
+
+    # Calculate distance for each user (excluding main)
+    for idx in range(len(all_persons)):
+        user = all_persons[idx]
+        try:
+            origin_node = get_node(
+                user['origin']['lat'], user['origin']['lng'])
+            destination_node = get_node(
+                user['destination']['lat'], user['destination']['lng'])
+
+            dist_origin = nx.shortest_path_length(
+                G, origin_main, origin_node, weight='length')
+            dist_dest = nx.shortest_path_length(
+                G, destination_main, destination_node, weight='length')
+            total_dist = dist_origin + dist_dest
+
+            distances.append((idx, total_dist))
+        except nx.NetworkXNoPath:
+            continue  # skip unreachable users
+
+    # Sort users by distance and pick two closest
+    distances.sort(key=lambda x: x[1])
+    closest_indices = [i for i, _ in distances[:2]]
+
+    # Extract users and delete them from original list
+    selected_users = [all_persons[i] for i in closest_indices]
+
+    # Remove selected users (highest index first to avoid shifting)
+    for i in sorted(closest_indices, reverse=True):
+        del all_persons[i]
+
+    socketio.emit('notify_user', selected_users[0])
+    socketio.emit('notify_user', selected_users[1])
+    socketio.emit('close_people_found', selected_users)
 
 
 # --------------------
@@ -154,7 +206,11 @@ def on_connect():
 
 @socketio.on('user_location')
 def on_user_location(data):
-    print("Received user location:", data)
+    global user_location
+    lat_o, lng_o = data['originlat'], data['originlng']
+    lat_d, lng_d = data['destinationlat'], data['destinationlng']
+    user_location = {'origin': {'lat': lat_o, 'lng': lng_o},
+                     'destination': {'lat': lat_d, 'lng': lng_d}}
     user_locations.append(data)
     socketio.emit('user_marker', data)
 
@@ -177,8 +233,8 @@ def on_confirm_request(data):
     destinations = [loc['destination'] for loc in locations]
 
     # Find shared origin and destination
-    shared_origin = find_best_shared_location(origins, client)
-    shared_destination = find_best_shared_location(destinations, client)
+    shared_origin = find_best_shared_location(origins)
+    shared_destination = find_best_shared_location(destinations)
 
     # Build routing data
     user_to_shared_origin = []
@@ -244,62 +300,22 @@ def snap_to_road(lng, lat, client):
         return {'lat': lat, 'lng': lng}
 
 
-def generate_candidate_points(coords, grid_size=3, radius=0.005):
-    # Compute center of points
-    avg_lat = np.mean([c['lat'] for c in coords])
-    avg_lng = np.mean([c['lng'] for c in coords])
+def find_best_shared_location(latlngs, place="Mehestan, Alborz Province, Iran"):
+    G = ox.graph_from_place(place, network_type="walk")
 
-    # Create grid of candidate points around center
-    offsets = np.linspace(-radius, radius, grid_size)
-    candidates = []
-    for dlat, dlng in product(offsets, offsets):
-        candidates.append({'lat': avg_lat + dlat, 'lng': avg_lng + dlng})
-    return candidates
+    nodes = [ox.distance.nearest_nodes(
+        G, loc['lng'], loc['lat']) for loc in latlngs]
 
+    total_dist = {node: 0.0 for node in G.nodes}
 
-def total_walking_distance(candidate, points, client):
-    # Prepare matrix request (from points to candidate)
-    try:
-        locations = [(p['lng'], p['lat']) for p in points] + \
-            [(candidate['lng'], candidate['lat'])]
-        sources = list(range(len(points)))         # user points
-        destinations = [len(points)]               # the candidate
-        matrix = client.distance_matrix(
-            locations=locations,
-            profile='foot-walking',
-            metrics=['distance'],
-            sources=sources,
-            destinations=destinations
-        )
-        return sum(matrix['distances'][i][0] for i in range(len(points)))
-    except Exception as e:
-        print(f"Matrix failed for {candidate}: {e}")
-        return float('inf')
+    for n in nodes:
+        dist_map = nx.single_source_dijkstra_path_length(G, n, weight="length")
+        for target_node, dist in dist_map.items():
+            total_dist[target_node] += dist
 
+    best_node = min(total_dist, key=total_dist.get)
 
-def find_best_shared_location(points, client):
-    # Snap input points to road
-    snapped_points = [snap_to_nearest_road(p['lat'], p['lng']) for p in points]
-
-    # Generate candidates around their average center
-    candidates = generate_candidate_points(
-        snapped_points, grid_size=5, radius=0.0005)  # tune as needed
-
-    # Snap candidates to road
-    snapped_candidates = [snap_to_nearest_road(
-        c['lat'], c['lng']) for c in candidates]
-
-    # Evaluate each candidate
-    best_candidate = None
-    min_total_distance = float('inf')
-    print("walking distance")
-    for candidate in snapped_candidates:
-        total_dist = total_walking_distance(candidate, snapped_points, client)
-        if total_dist < min_total_distance:
-            min_total_distance = total_dist
-            best_candidate = candidate
-
-    return best_candidate
+    return {'lat': G.nodes[best_node]['y'], 'lng': G.nodes[best_node]['x']}
 
 
 def get_route(client, origin, destination):

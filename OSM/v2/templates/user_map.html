@@ -77,6 +77,9 @@
       user: { origin: null, destination: null },
       others: [] // array of { origin, destination }
     };
+    const routingMarkers = [];
+    const routingPolylines = [];
+
 
     // Your own person icon (red, male-like silhouette)
     const personIconRed = L.icon({
@@ -185,15 +188,21 @@
       });
 
       document.getElementById('regroupBtn').onclick = () => {
-        // Send user marker data only
+        // Send user marker data
         socket.emit('regroup_request', markerData);
 
-        // Remove simulated people markers from map
+        // Remove other simulated people markers
         otherMarkers.forEach(marker => map.removeLayer(marker));
-        otherMarkers.length = 0; // Clear the array
-
-        // Clear the associated structured data too, if needed
+        otherMarkers.length = 0;
         markerData.others = [];
+
+        // Remove routing markers
+        routingMarkers.forEach(marker => map.removeLayer(marker));
+        routingMarkers.length = 0;
+
+        // Remove routing polylines
+        routingPolylines.forEach(polyline => map.removeLayer(polyline));
+        routingPolylines.length = 0;
       };
 
       document.getElementById('confirmBtn').onclick = () => {
@@ -208,38 +217,35 @@
         const sharedOriginMarker = L.marker([shared_origin.lat, shared_origin.lng], {
           icon: sharedIcon
         }).addTo(map).bindPopup("Shared Origin");
+        routingMarkers.push(sharedOriginMarker);
 
         // Add shared destination marker
         const sharedDestMarker = L.marker([shared_destination.lat, shared_destination.lng], {
           icon: sharedIcon
         }).addTo(map).bindPopup("Shared Destination");
+        routingMarkers.push(sharedDestMarker);
 
-        // Draw routes from each user origin to shared origin
+        // Routes from user to shared origin
         routes.user_to_shared_origin.forEach((route) => {
           const latlngs = route.geometry.map(coord => [coord[1], coord[0]]);
-          const distanceKm = (route.distance / 1000).toFixed(2);
-          const durationMin = Math.ceil(route.duration / 60);
-
           const polyline = L.polyline(latlngs, { color: 'blue' }).addTo(map);
-          polyline.bindPopup(`User ${route.user_id} → Shared Origin<br>${distanceKm} km<br>${durationMin} min`);
+          polyline.bindPopup(`User ${route.user_id} → Shared Origin`);
+          routingPolylines.push(polyline);
         });
 
-        // Draw route from shared origin to shared destination
+        // Route from shared origin to destination
         const sharedPath = routes.shared_origin_to_shared_destination;
         const sharedLatLngs = sharedPath.geometry.map(coord => [coord[1], coord[0]]);
         const sharedPolyline = L.polyline(sharedLatLngs, { color: 'green', weight: 4 }).addTo(map);
-        const sharedDistKm = (sharedPath.distance / 1000).toFixed(2);
-        const sharedDurMin = Math.ceil(sharedPath.duration / 60);
-        sharedPolyline.bindPopup(`Shared Origin → Shared Destination<br>${sharedDistKm} km<br>${sharedDurMin} min`);
+        sharedPolyline.bindPopup(`Shared Origin → Shared Destination`);
+        routingPolylines.push(sharedPolyline);
 
-        // Draw routes from each user destination to shared destination
+        // Routes from user destination to shared destination
         routes.user_to_shared_destination.forEach((route) => {
           const latlngs = route.geometry.map(coord => [coord[1], coord[0]]);
-          const distanceKm = (route.distance / 1000).toFixed(2);
-          const durationMin = Math.ceil(route.duration / 60);
-
           const polyline = L.polyline(latlngs, { color: 'red' }).addTo(map);
-          polyline.bindPopup(`User ${route.user_id} → Shared Destination<br>${distanceKm} km<br>${durationMin} min`);
+          polyline.bindPopup(`User ${route.user_id} → Shared Destination`);
+          routingPolylines.push(polyline);
         });
       });
 
@@ -247,20 +253,38 @@
 
     function onMapClick(e) {
       const { lat, lng } = e.latlng;
-      if (clickCount === 0) {
-        if (originMarker) map.removeLayer(originMarker);
-        originMarker = L.marker([lat, lng], { icon: personIconRed }).addTo(map)
-          .bindPopup("Your Origin").openPopup();
-        markerData.user.origin = { lat, lng }; // Save origin
-        clickCount++;
-      } else if (clickCount === 1) {
-        if (destMarker) map.removeLayer(destMarker);
-        destMarker = L.marker([lat, lng], { icon: personIconRed }).addTo(map)
-          .bindPopup("Your Destination").openPopup();
-        markerData.user.destination = { lat, lng }; // Save destination
-        clickCount++;
-      }
+
+      // Emit the coordinates to the backend
+      socket.emit("snap_to_road", { lat, lng });
+
+      // Listen for the snapped coordinates
+      socket.once("snapped_coordinates", ({ lat: snappedLat, lng: snappedLng }) => {
+        if (clickCount === 0) {
+          if (originMarker) map.removeLayer(originMarker);
+          originMarker = L.marker([snappedLat, snappedLng], { icon: personIconRed })
+            .addTo(map)
+            .bindPopup("Your Origin")
+            .openPopup();
+          markerData.user.origin = { lat: snappedLat, lng: snappedLng };
+          clickCount++;
+        } else if (clickCount === 1) {
+          if (destMarker) map.removeLayer(destMarker);
+          destMarker = L.marker([snappedLat, snappedLng], { icon: personIconRed })
+            .addTo(map)
+            .bindPopup("Your Destination")
+            .openPopup();
+          markerData.user.destination = { lat: snappedLat, lng: snappedLng };
+          clickCount++;
+        }
+      });
+
+      // Optional: handle errors
+      socket.once("snap_error", (errorMsg) => {
+        console.error("Snap error:", errorMsg);
+        alert("Failed to snap to road.");
+      });
     }
+
   </script>
 
 </body>

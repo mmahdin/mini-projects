@@ -1,5 +1,5 @@
 import socketio as sio_client
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit, join_room
 from itertools import combinations
 import math
@@ -23,13 +23,14 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
 
-place = "Mehestan, Alborz Province, Iran"
-
 friends = []
 
 # Connect to the server backend
 server_socket = sio_client.Client()
 server_socket.connect("http://localhost:5001")
+
+place = "Mehestan, Alborz Province, Iran"
+G = ox.graph_from_place(place, network_type="walk")
 
 
 @app.route('/')
@@ -53,6 +54,12 @@ def handle_apply_request(data):
     sid = request.sid
     origin = (data['origin']['lat'], data['origin']['lng'])
     destination = (data['destination']['lat'], data['destination']['lng'])
+
+    origin = snap_to_nearest_road(origin[0], origin[1])
+    destination = snap_to_nearest_road(destination[0], destination[1])
+
+    origin = (origin['lat'], origin['lng'])
+    destination = (destination['lat'], destination['lng'])
 
     server_socket.emit('user_location', {
                        "originlat": origin[0], "originlng": origin[1], "destinationlat": destination[0], "destinationlng": destination[1]})
@@ -92,6 +99,33 @@ def handle_routing(data):
 def on_join(data):
     sid = request.sid
     join_room(sid)
+
+
+def snap_to_nearest_road(lat, lng):
+    try:
+        nearest_node = ox.distance.nearest_nodes(G, lng, lat)
+        snapped_point = G.nodes[nearest_node]
+        return {'lat': snapped_point['y'], 'lng': snapped_point['x']}
+    except Exception as e:
+        print(f"Snap failed: {e}")
+        return None
+
+
+@socketio.on('snap_to_road')
+def handle_snap_to_road(data):
+    lat = data.get('lat')
+    lng = data.get('lng')
+
+    if lat is None or lng is None:
+        emit('snap_error', 'Missing coordinates')
+        return
+
+    snapped = snap_to_nearest_road(lat, lng)
+
+    if snapped:
+        emit('snapped_coordinates', snapped)
+    else:
+        emit('snap_error', 'Failed to snap to road')
 
 
 if __name__ == '__main__':
