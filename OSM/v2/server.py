@@ -51,6 +51,7 @@ DISTANCE_THRESHOLD_METERS = 500
 
 place = "Mehestan, Alborz Province, Iran"
 G = ox.graph_from_place(place, network_type="walk")
+GC = ox.graph_from_place(place, network_type="drive")
 
 
 def snap_to_nearest_road(lat, lng, network_type='walk'):
@@ -194,6 +195,48 @@ def closest_users():
     socketio.emit('close_people_found', selected_users)
 
 
+def find_best_shared_location(latlngs):
+    nodes = [ox.distance.nearest_nodes(
+        G, loc['lng'], loc['lat']) for loc in latlngs]
+
+    total_dist = {node: 0.0 for node in G.nodes}
+
+    for n in nodes:
+        dist_map = nx.single_source_dijkstra_path_length(G, n, weight="length")
+        for target_node, dist in dist_map.items():
+            total_dist[target_node] += dist
+
+    best_node = min(total_dist, key=total_dist.get)
+
+    return {'lat': G.nodes[best_node]['y'], 'lng': G.nodes[best_node]['x']}
+
+
+def get_route(client, origin, destination):
+    response = client.directions(
+        coordinates=[[origin['lng'], origin['lat']], [
+            destination['lng'], destination['lat']]],
+        profile='foot-walking',
+        format='geojson'
+    )
+
+    features = response.get('features', [])
+    if not features:
+        print(f"Empty features for route from {origin} to {destination}")
+        return {
+            'geometry': [],
+            'distance': 0,
+            'duration': 0
+        }
+
+    feature = features[0]
+    summary = feature.get('properties', {}).get('summary', {})
+    return {
+        'geometry': feature['geometry']['coordinates'],
+        'distance': summary.get('distance', 0),
+        'duration': summary.get('duration', 0)
+    }
+
+
 # --------------------
 # SocketIO Handlers
 # --------------------
@@ -283,65 +326,6 @@ def on_confirm_request(data):
             }
         }
     })
-
-
-def snap_to_road(lng, lat, client):
-    try:
-        # Use a dummy route to self — ORS will snap this point to the road
-        route = client.directions(
-            coordinates=[[lng, lat], [lng, lat]],
-            profile='foot-walking',
-            format='geojson'
-        )
-        snapped_coords = route['features'][0]['geometry']['coordinates'][0]
-        return {'lat': snapped_coords[1], 'lng': snapped_coords[0]}
-    except Exception as e:
-        print("Snap to road failed using directions:", e)
-        return {'lat': lat, 'lng': lng}
-
-
-def find_best_shared_location(latlngs, place="Mehestan, Alborz Province, Iran"):
-    G = ox.graph_from_place(place, network_type="walk")
-
-    nodes = [ox.distance.nearest_nodes(
-        G, loc['lng'], loc['lat']) for loc in latlngs]
-
-    total_dist = {node: 0.0 for node in G.nodes}
-
-    for n in nodes:
-        dist_map = nx.single_source_dijkstra_path_length(G, n, weight="length")
-        for target_node, dist in dist_map.items():
-            total_dist[target_node] += dist
-
-    best_node = min(total_dist, key=total_dist.get)
-
-    return {'lat': G.nodes[best_node]['y'], 'lng': G.nodes[best_node]['x']}
-
-
-def get_route(client, origin, destination):
-    response = client.directions(
-        coordinates=[[origin['lng'], origin['lat']], [
-            destination['lng'], destination['lat']]],
-        profile='foot-walking',
-        format='geojson'
-    )
-
-    features = response.get('features', [])
-    if not features:
-        print(f"Empty features for route from {origin} to {destination}")
-        return {
-            'geometry': [],
-            'distance': 0,
-            'duration': 0
-        }
-
-    feature = features[0]
-    summary = feature.get('properties', {}).get('summary', {})
-    return {
-        'geometry': feature['geometry']['coordinates'],
-        'distance': summary.get('distance', 0),
-        'duration': summary.get('duration', 0)
-    }
 
 
 @app.route('/')
