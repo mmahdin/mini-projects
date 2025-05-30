@@ -25,6 +25,7 @@ socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
 
 place = "Mehestan, Alborz Province, Iran"
 
+friends = []
 
 # Connect to the server backend
 server_socket = sio_client.Client()
@@ -65,14 +66,21 @@ def handle_notify_user_from_server(data):
     socketio.emit('notify_user', data)
 
 
-friends = []
-
-
 @server_socket.on('close_people_found')
 def handle_confirm(data):
     global friends
     friends = data
     socketio.emit('ask_for_confirm')
+
+
+@socketio.on('regroup_request')
+def handle_apply_request(markerData):
+    server_socket.emit('regroup_request', markerData)
+
+
+@socketio.on('confirm_request')
+def handle_apply_request(markerData):
+    server_socket.emit('confirm_request', markerData)
 
 
 @socketio.on('join')

@@ -54,6 +54,8 @@
   <div id="map"></div>
   <div id="controls">
     <button id="applyBtn">Apply</button>
+    <button id="regroupBtn" style="display: none; background-color: red;">Regroup</button>
+    <button id="confirmBtn" style="display: none; background-color: green;">Confirm</button>
   </div>
 
   <!-- Socket.IO (no integrity attributes) -->
@@ -70,8 +72,11 @@
     let destMarker = null;
     let clickCount = 0;
     let closePerson = 0;
-    let userMarkers = [];
-    let deletedMarkerLocations = [];
+    const otherMarkers = []; 
+    const markerData = {
+      user: { origin: null, destination: null },
+      others: [] // array of { origin, destination }
+    };
 
     // Your own person icon (red, male-like silhouette)
     const personIconRed = L.icon({
@@ -145,37 +150,48 @@
       socket.on('notify_user', (data) => {
         const { origin, destination } = data;
 
-        const originM = L.marker([origin.lat, origin.lng], { icon: originIcon }).addTo(map)
-          .bindPopup("Origin" + closePerson).openPopup();
-        addDeleteHandler(originM, origin.lat, origin.lng);
-        userMarkers.push(originM);
+        const originM = L.marker([origin.lat, origin.lng], { icon: originIcon })
+          .addTo(map)
+          .bindPopup("Origin" + closePerson)
+          .openPopup();
 
-        const destM = L.marker([destination.lat, destination.lng], { icon: destinationIcon }).addTo(map)
-          .bindPopup("Destination" + closePerson).openPopup();
-        addDeleteHandler(destM, destination.lat, destination.lng);
-        userMarkers.push(destM);
+        const destM = L.marker([destination.lat, destination.lng], { icon: destinationIcon })
+          .addTo(map)
+          .bindPopup("Destination" + closePerson)
+          .openPopup();
+
+        // Track the marker instances
+        otherMarkers.push(originM, destM);
+
+        // Track the data
+        markerData.others.push({ origin, destination });
 
         closePerson++;
       });
 
       socket.on('ask_for_confirm', () => {
-        const applyBtn = document.getElementById('applyBtn');
-        applyBtn.textContent = 'Confirm';
+        document.getElementById('applyBtn').style.display = 'none';
+        document.getElementById('regroupBtn').style.display = 'inline-block';
+        document.getElementById('confirmBtn').style.display = 'inline-block';
       });
+
+      document.getElementById('regroupBtn').onclick = () => {
+        // Send user marker data only
+        socket.emit('regroup_request', markerData);
+
+        // Remove simulated people markers from map
+        otherMarkers.forEach(marker => map.removeLayer(marker));
+        otherMarkers.length = 0; // Clear the array
+
+        // Clear the associated structured data too, if needed
+        markerData.others = [];
+      };
+
+      document.getElementById('confirmBtn').onclick = () => {
+        socket.emit('confirm_request', markerData); // Send data
+      };
+
     });
-
-
-    function addDeleteHandler(marker, lat, lng) {
-      marker.on('click', () => {
-        if (confirm("Delete this marker?")) {
-          map.removeLayer(marker);
-          deletedMarkerLocations.push({ lat, lng });
-          // Optionally, send it to the server
-          socket.emit('marker_deleted', { lat, lng });
-        }
-      });
-    }
-
 
     function onMapClick(e) {
       const { lat, lng } = e.latlng;
@@ -183,17 +199,17 @@
         if (originMarker) map.removeLayer(originMarker);
         originMarker = L.marker([lat, lng], { icon: personIconRed }).addTo(map)
           .bindPopup("Your Origin").openPopup();
+        markerData.user.origin = { lat, lng }; // Save origin
         clickCount++;
       } else if (clickCount === 1) {
         if (destMarker) map.removeLayer(destMarker);
         destMarker = L.marker([lat, lng], { icon: personIconRed }).addTo(map)
           .bindPopup("Your Destination").openPopup();
+        markerData.user.destination = { lat, lng }; // Save destination
         clickCount++;
       }
     }
   </script>
 
-
-  </script>
 </body>
 </html>
