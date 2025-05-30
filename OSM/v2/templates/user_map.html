@@ -48,14 +48,78 @@
       border: 2px solid white;
       box-shadow: 0 0 3px rgba(0,0,0,0.5);
     }
+
+    #schedulePanel {
+      position: fixed;
+      top: 0;
+      right: -420px;
+      width: 400px;
+      height: 100%;
+      background: #1b1b1b;
+      border-left: 1px solid #ddd;
+      overflow-y: auto;
+      box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+      padding: 20px;
+      transition: right 0.4s ease;
+      z-index: 10000;
+      border-top-left-radius: 10px;
+      border-bottom-left-radius: 10px;
+    }
+
+    #schedulePanel.open {
+      right: 0;
+    }
+
+    #schedulePanel h3 {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      color: #333;
+      text-align: center;
+      font-weight: 600;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+    }
+
+    .schedule-item {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .schedule-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .schedule-item strong {
+      display: inline-block;
+      width: 130px;
+      font-weight: 600;
+      color: #444;
+    }
+
+    .schedule-item span {
+      color: #555;
+    }
+
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="controls">
-    <button id="applyBtn">Apply</button>
+    <button id="applyBtn" style="display: none">Apply</button>
     <button id="regroupBtn" style="display: none; background-color: red;">Regroup</button>
     <button id="confirmBtn" style="display: none; background-color: green;">Confirm</button>
+    <button id="scheduleBtn" style="display: inline-block; background-color: #007bff; color: white;">Schedule List</button>
+  </div>
+
+  <div id="schedulePanel" style="color: red;">
+      <h3 style="color: #fff;">Schedule List</h3>
+      <div id="scheduleContent" style="color: green;"></div>
   </div>
 
   <!-- Socket.IO (no integrity attributes) -->
@@ -125,9 +189,18 @@
       className: 'destination-icon'
     });
 
+    // Close panel if user clicks outside of it
+    document.addEventListener('click', (e) => {
+      const panel = document.getElementById('schedulePanel');
+      const btn = document.getElementById('scheduleBtn');
+      if (!panel.contains(e.target) && e.target !== btn) {
+        panel.classList.remove('open');
+      }
+    });
+
 
     document.addEventListener('DOMContentLoaded', () => {
-      map = L.map('map').setView([35.968, 50.737], 17);
+      map = L.map('map').setView([35.972447, 50.732428], 17);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
       }).addTo(map);
@@ -135,11 +208,78 @@
       map.getContainer().style.cursor = 'crosshair';
       map.on('click', onMapClick);
 
+
+      document.getElementById('scheduleBtn').onclick = () => {
+        const panel = document.getElementById('schedulePanel');
+        panel.classList.toggle('open');
+
+        if (!panel.dataset.loaded) {
+          socket.emit('request_schedule_data');
+        }
+      };
+
+      socket.on('schedule_data', (data) => {
+        const content = document.getElementById('scheduleContent');
+        content.innerHTML = '';
+        data.forEach((item, index) => {
+          const el = document.createElement('div');
+          el.className = 'schedule-item';
+          el.innerHTML = `
+            <div><strong>From:</strong> <span>${item.origin}</span></div>
+            <div><strong>To:</strong> <span>${item.destination}</span></div>
+            <div><strong>Total Saves:</strong> <span>${item.savedUsers}</span></div>
+            <div><strong>Online Users:</strong> <span>${item.onlineUsers}</span></div>
+          `;
+
+          // Set lat/lng as data attributes
+          el.dataset.originLat = item.origin_lat;
+          el.dataset.originLng = item.origin_lng;
+          el.dataset.destLat = item.dest_lat;
+          el.dataset.destLng = item.dest_lng;
+
+          // Make the item clickable
+          el.style.cursor = 'pointer';
+          el.onclick = () => {
+            const oLat = parseFloat(el.dataset.originLat);
+            const oLng = parseFloat(el.dataset.originLng);
+            const dLat = parseFloat(el.dataset.destLat);
+            const dLng = parseFloat(el.dataset.destLng);
+
+            if (originMarker) map.removeLayer(originMarker);
+            originMarker = L.marker([oLat, oLng], { icon: personIconRed })
+              .addTo(map)
+              .bindPopup("Your Origin")
+              .openPopup();
+            markerData.user.origin = { lat: oLat, lng: oLng };
+
+            if (destMarker) map.removeLayer(destMarker);
+            destMarker = L.marker([dLat, dLng], { icon: personIconRed })
+              .addTo(map)
+              .bindPopup("Your Destination")
+              .openPopup();
+            markerData.user.destination = { lat: dLat, lng: dLng };
+
+            document.getElementById('applyBtn').style.display = 'inline-block';
+
+            clickCount = 2;
+          };
+
+          content.appendChild(el);
+        });
+
+        document.getElementById('schedulePanel').dataset.loaded = 'true';
+      });
+
+
       document.getElementById('applyBtn').onclick = () => {
         if (!originMarker || !destMarker) {
           alert("Please set both origin and destination before applying.");
           return;
         }
+
+        document.getElementById('scheduleBtn').style.display = 'none';
+        document.getElementById('schedulePanel').classList.remove('open');
+
         const o = originMarker.getLatLng();
         const d = destMarker.getLatLng();
         socket.emit('apply_request', {
@@ -274,6 +414,7 @@
             .bindPopup("Your Destination")
             .openPopup();
           markerData.user.destination = { lat: snappedLat, lng: snappedLng };
+          document.getElementById('applyBtn').style.display = 'inline-block';
           clickCount++;
         }
       });

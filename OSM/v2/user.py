@@ -8,6 +8,8 @@ import networkx as nx
 import osmnx as ox
 import requests
 import os
+import csv
+import os
 
 # Disable proxies if inherited from environment
 os.environ["http_proxy"] = ""
@@ -126,6 +128,34 @@ def handle_snap_to_road(data):
         emit('snapped_coordinates', snapped)
     else:
         emit('snap_error', 'Failed to snap to road')
+
+
+@socketio.on('request_schedule_data')
+def handle_schedule_request():
+    data = []
+    csv_path = os.path.join(os.path.dirname(__file__), 'schedule_data.csv')
+
+    with open(csv_path, newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            res = snap_to_nearest_road(
+                float(row.get('Origin Lat', 0)), float(row.get('Origin Lng', 0)))
+            lat_o, lng_o = res['lat'], res['lng']
+            res = snap_to_nearest_road(
+                float(row.get('Dest Lat', 0)), float(row.get('Dest Lng', 0)))
+            lat_d, lng_d = res['lat'], res['lng']
+            data.append({
+                'origin': row.get('Origin Address', ''),
+                'destination': row.get('Destination Address', ''),
+                'savedUsers': row.get('Saved Users', '0'),
+                'onlineUsers': row.get('Online Users', '0'),
+                'origin_lat': lat_o,
+                'origin_lng': lng_o,
+                'dest_lat': lat_d,
+                'dest_lng': lng_d,
+            })
+
+    emit('schedule_data', data)
 
 
 if __name__ == '__main__':

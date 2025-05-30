@@ -211,11 +211,22 @@ def find_best_shared_location(latlngs):
     return {'lat': G.nodes[best_node]['y'], 'lng': G.nodes[best_node]['x']}
 
 
-def get_route(client, origin, destination):
+def get_route(client, origin, destination, profile='walking'):
+    profile_map = {
+        'walking': 'foot-walking',
+        'driving': 'driving-car'
+    }
+
+    # Validate and retrieve the correct profile
+    selected_profile = profile_map.get(profile)
+    if not selected_profile:
+        raise ValueError(
+            f"Invalid profile '{profile}'. Choose 'walking' or 'driving'.")
+
     response = client.directions(
         coordinates=[[origin['lng'], origin['lat']], [
             destination['lng'], destination['lat']]],
-        profile='foot-walking',
+        profile=selected_profile,
         format='geojson'
     )
 
@@ -285,7 +296,8 @@ def on_confirm_request(data):
 
     for idx, loc in enumerate(locations):
         # Route from user origin to shared origin
-        route_to_origin = get_route(client, loc['origin'], shared_origin)
+        route_to_origin = get_route(
+            client, loc['origin'], shared_origin, profile='walking')
         user_to_shared_origin.append({
             'user_id': idx,
             'from': loc['origin'],
@@ -297,7 +309,7 @@ def on_confirm_request(data):
 
         # Route from user destination to shared destination
         route_to_dest = get_route(
-            client, loc['destination'], shared_destination)
+            client, loc['destination'], shared_destination,  profile='walking')
         user_to_shared_destination.append({
             'user_id': idx,
             'from': loc['destination'],
@@ -308,7 +320,8 @@ def on_confirm_request(data):
         })
 
     # Route between shared origin and destination
-    shared_route = get_route(client, shared_origin, shared_destination)
+    shared_route = get_route(client, shared_origin,
+                             shared_destination,  profile='driving')
 
     # Emit all routes to frontend
     emit('routing', {
