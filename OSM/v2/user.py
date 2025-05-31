@@ -66,12 +66,11 @@ def handle_apply_request(data):
     server_socket.emit('user_location', {
                        "originlat": origin[0], "originlng": origin[1], "destinationlat": destination[0], "destinationlng": destination[1]})
 
-    socketio.emit('group_assigned', 'payload')
+    # socketio.emit('group_assigned', 'payload')
 
 
 @server_socket.on('notify_user')
 def handle_notify_user_from_server(data):
-    print("Received from server:", data)
     socketio.emit('notify_user', data)
 
 

@@ -136,7 +136,6 @@ def start_simulation():
             if cnt % len(offset_patterns) == 0:
                 ofstv += increaseby
             if cnt >= pnum * len(offset_patterns):
-                print(all_persons)
                 SIMULATION_RUNNING = False
                 closest_users()
                 return
@@ -151,7 +150,7 @@ def start_simulation():
 def closest_users():
     def get_node(lat, lng):
         return ox.distance.nearest_nodes(G, lng, lat)
-
+    global user_location
     user = user_locations[0]
     lat_o, lng_o = user['originlat'], user['originlng']
     lat_d, lng_d = user['destinationlat'], user['destinationlng']
@@ -193,6 +192,7 @@ def closest_users():
     socketio.emit('notify_user', selected_users[0])
     socketio.emit('notify_user', selected_users[1])
     socketio.emit('close_people_found', selected_users)
+    on_confirm_request(selected_users + [user_location])
 
 
 def find_best_shared_location(latlngs):
@@ -279,10 +279,7 @@ def on_regroup_request(data):
     start_simulation()
 
 
-@socketio.on('confirm_request')
-def on_confirm_request(data):
-    locations = data['others'] + [data['user']]
-
+def on_confirm_request(locations):
     # Separate origins and destinations
     origins = [loc['origin'] for loc in locations]
     destinations = [loc['destination'] for loc in locations]
@@ -325,7 +322,7 @@ def on_confirm_request(data):
                              shared_destination,  profile='driving')
 
     # Emit all routes to frontend
-    emit('routing', {
+    socketio.emit('routing', {
         'shared_origin': shared_origin,
         'shared_destination': shared_destination,
         'routes': {
@@ -365,5 +362,5 @@ def index():
 # App Runner
 # --------------------
 if __name__ == '__main__':
-    start_simulation()
+    # start_simulation()
     socketio.run(app, host='0.0.0.0', port=5001)
