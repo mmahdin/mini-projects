@@ -98,7 +98,7 @@ def get_offset_patterns(ofst):
     return offset_patterns
 
 
-def start_simulation():
+def start_simulation(num):
     def simulation_loop():
         cnt = 0
         global ofstv, SIMULATION_RUNNING, prev_locations, all_persons
@@ -137,7 +137,7 @@ def start_simulation():
                 ofstv += increaseby
             if cnt >= pnum * len(offset_patterns):
                 SIMULATION_RUNNING = False
-                closest_users()
+                closest_users(num)
                 return
 
             # socketio.sleep(0.1)
@@ -147,7 +147,7 @@ def start_simulation():
     thread.start()
 
 
-def closest_users():
+def closest_users(num):
     def get_node(lat, lng):
         return ox.distance.nearest_nodes(G, lng, lat)
     global user_location
@@ -180,7 +180,7 @@ def closest_users():
 
     # Sort users by distance and pick two closest
     distances.sort(key=lambda x: x[1])
-    closest_indices = [i for i, _ in distances[:2]]
+    closest_indices = [i for i, _ in distances[:3-num]]
 
     # Extract users and delete them from original list
     selected_users = [all_persons[i] for i in closest_indices]
@@ -189,10 +189,70 @@ def closest_users():
     for i in sorted(closest_indices, reverse=True):
         del all_persons[i]
 
-    socketio.emit('notify_user', selected_users[0])
-    socketio.emit('notify_user', selected_users[1])
+    for i in range(len(selected_users)):
+        socketio.emit('notify_user', selected_users[i])
     socketio.emit('close_people_found', selected_users)
     on_confirm_request(selected_users + [user_location])
+
+
+def on_confirm_request(locations):
+    # Separate origins and destinations
+    origins = [loc['origin'] for loc in locations]
+    destinations = [loc['destination'] for loc in locations]
+
+    # Find shared origin and destination
+    shared_origin = find_best_shared_location(origins)
+    shared_destination = find_best_shared_location(destinations)
+
+    # Build routing data
+    user_to_shared_origin = []
+    user_to_shared_destination = []
+
+    for idx, loc in enumerate(locations):
+        # Route from user origin to shared origin
+        route_to_origin = get_route(
+            client, loc['origin'], shared_origin, profile='walking')
+        user_to_shared_origin.append({
+            'user_id': idx,
+            'from': loc['origin'],
+            'to': shared_origin,
+            'geometry': route_to_origin['geometry'],
+            'distance': route_to_origin['distance'],
+            'duration': route_to_origin['duration']
+        })
+
+        # Route from user destination to shared destination
+        route_to_dest = get_route(
+            client, loc['destination'], shared_destination,  profile='walking')
+        user_to_shared_destination.append({
+            'user_id': idx,
+            'from': loc['destination'],
+            'to': shared_destination,
+            'geometry': route_to_dest['geometry'],
+            'distance': route_to_dest['distance'],
+            'duration': route_to_dest['duration']
+        })
+
+    # Route between shared origin and destination
+    shared_route = get_route(client, shared_origin,
+                             shared_destination,  profile='driving')
+
+    # Emit all routes to frontend
+    socketio.emit('routing', {
+        'shared_origin': shared_origin,
+        'shared_destination': shared_destination,
+        'routes': {
+            'user_to_shared_origin': user_to_shared_origin,
+            'user_to_shared_destination': user_to_shared_destination,
+            'shared_origin_to_shared_destination': {
+                'from': shared_origin,
+                'to': shared_destination,
+                'geometry': shared_route['geometry'],
+                'distance': shared_route['distance'],
+                'duration': shared_route['duration']
+            }
+        }
+    })
 
 
 def find_best_shared_location(latlngs):
@@ -261,82 +321,22 @@ def on_connect():
 @socketio.on('user_location')
 def on_user_location(data):
     global user_location
-    lat_o, lng_o = data['originlat'], data['originlng']
-    lat_d, lng_d = data['destinationlat'], data['destinationlng']
+    lat_o, lng_o = data['data']['originlat'], data['data']['originlng']
+    lat_d, lng_d = data['data']['destinationlat'], data['data']['destinationlng']
     user_location = {'origin': {'lat': lat_o, 'lng': lng_o},
                      'destination': {'lat': lat_d, 'lng': lng_d}}
-    user_locations.append(data)
-    socketio.emit('user_marker', data)
-    start_simulation()
+    user_locations.append(data['data'])
+    socketio.emit('user_marker', data['data'])
+    start_simulation(data['num'])
 
 
 @socketio.on('regroup_request')
 def on_regroup_request(data):
     global SIMULATION_RUNNING, ofstv, prev_locations
-    prev_locations += data['others']
+    prev_locations += data['data']['others']
     ofstv += 0.00000
     SIMULATION_RUNNING = True
-    start_simulation()
-
-
-def on_confirm_request(locations):
-    # Separate origins and destinations
-    origins = [loc['origin'] for loc in locations]
-    destinations = [loc['destination'] for loc in locations]
-
-    # Find shared origin and destination
-    shared_origin = find_best_shared_location(origins)
-    shared_destination = find_best_shared_location(destinations)
-
-    # Build routing data
-    user_to_shared_origin = []
-    user_to_shared_destination = []
-
-    for idx, loc in enumerate(locations):
-        # Route from user origin to shared origin
-        route_to_origin = get_route(
-            client, loc['origin'], shared_origin, profile='walking')
-        user_to_shared_origin.append({
-            'user_id': idx,
-            'from': loc['origin'],
-            'to': shared_origin,
-            'geometry': route_to_origin['geometry'],
-            'distance': route_to_origin['distance'],
-            'duration': route_to_origin['duration']
-        })
-
-        # Route from user destination to shared destination
-        route_to_dest = get_route(
-            client, loc['destination'], shared_destination,  profile='walking')
-        user_to_shared_destination.append({
-            'user_id': idx,
-            'from': loc['destination'],
-            'to': shared_destination,
-            'geometry': route_to_dest['geometry'],
-            'distance': route_to_dest['distance'],
-            'duration': route_to_dest['duration']
-        })
-
-    # Route between shared origin and destination
-    shared_route = get_route(client, shared_origin,
-                             shared_destination,  profile='driving')
-
-    # Emit all routes to frontend
-    socketio.emit('routing', {
-        'shared_origin': shared_origin,
-        'shared_destination': shared_destination,
-        'routes': {
-            'user_to_shared_origin': user_to_shared_origin,
-            'user_to_shared_destination': user_to_shared_destination,
-            'shared_origin_to_shared_destination': {
-                'from': shared_origin,
-                'to': shared_destination,
-                'geometry': shared_route['geometry'],
-                'distance': shared_route['distance'],
-                'duration': shared_route['duration']
-            }
-        }
-    })
+    start_simulation(data['num'])
 
 
 @socketio.on('reset')

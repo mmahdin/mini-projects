@@ -59,6 +59,7 @@ def handle_apply_request(data):
     sid = request.sid
     origin = (data['origin']['lat'], data['origin']['lng'])
     destination = (data['destination']['lat'], data['destination']['lng'])
+    num = data['num']
 
     origin = snap_to_nearest_road(origin[0], origin[1])
     destination = snap_to_nearest_road(destination[0], destination[1])
@@ -66,8 +67,8 @@ def handle_apply_request(data):
     origin = (origin['lat'], origin['lng'])
     destination = (destination['lat'], destination['lng'])
 
-    server_socket.emit('user_location', {
-                       "originlat": origin[0], "originlng": origin[1], "destinationlat": destination[0], "destinationlng": destination[1]})
+    server_socket.emit('user_location', {'data': {
+                       "originlat": origin[0], "originlng": origin[1], "destinationlat": destination[0], "destinationlng": destination[1]}, "num": num})
 
     # socketio.emit('group_assigned', 'payload')
 
