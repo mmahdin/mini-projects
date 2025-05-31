@@ -1,3 +1,4 @@
+from geopy.geocoders import Nominatim
 import socketio as sio_client
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit, join_room
@@ -10,6 +11,8 @@ import requests
 import os
 import csv
 import os
+import random
+from Fingilish import Finglish
 
 # Disable proxies if inherited from environment
 os.environ["http_proxy"] = ""
@@ -24,7 +27,7 @@ os.environ["all_proxy"] = ""
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
-
+geolocator = Nominatim(user_agent="your_app_name")
 friends = []
 
 # Connect to the server backend
@@ -160,6 +163,61 @@ def handle_schedule_request():
                 'time': row.get('Time', '')
             })
     emit('schedule_data', data)
+
+
+def reverse_geocode(lat, lng):
+    try:
+        location = geolocator.reverse((lat, lng), exactly_one=True)
+        if location and location.address:
+            parts = location.address.split(', ')
+            if len(parts) >= 2:
+                # Return last two parts
+                return ', '.join(parts[:2][::-1])
+            else:
+                return ', '.join(parts[::-1])
+        else:
+            return "Unknown Address"
+    except Exception as e:
+        print(e)
+        return "Unknown Address"
+
+
+@socketio.on('get_addresses')
+def handle_get_addresses(data):
+    origin = snap_to_nearest_road(data['origin']['lat'], data['origin']['lng'])
+    destination = snap_to_nearest_road(
+        data['destination']['lat'], data['destination']['lng'])
+
+    origin_address = reverse_geocode(origin['lat'], origin['lng'])
+    destination_address = reverse_geocode(
+        destination['lat'], destination['lng'])
+
+    emit('address_data', {
+        'origin_address': origin_address,
+        'destination_address': destination_address
+    })
+
+
+@socketio.on('submit_entry')
+def handle_submit_entry(data):
+    saved_users = random.randint(1, 10)
+    online_users = random.randint(0, saved_users - 1)
+
+    row = [
+        data['origin_address'],
+        data['destination_address'],
+        saved_users,
+        online_users,
+        data['origin_lat'],
+        data['origin_lng'],
+        data['dest_lat'],
+        data['dest_lng'],
+        data['time']
+    ]
+    csv_path = os.path.join(os.path.dirname(__file__), 'schedule_data.csv')
+    with open(csv_path, mode='a', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(row)
 
 
 if __name__ == '__main__':
