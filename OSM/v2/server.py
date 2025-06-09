@@ -40,7 +40,7 @@ all_persons = []
 user_location = {}
 
 SIMULATION_RUNNING = True
-ofstv = 0.0005
+ofstv = 0.001
 
 LAT_RANGE = (35.95, 35.98)   # Example: Mehestan, Iran
 LNG_RANGE = (50.72, 50.75)
@@ -49,6 +49,7 @@ MIN_DISTANCE = 0.0001
 MIN_DISTANCE_UNIQUE = 0.00001
 DISTANCE_THRESHOLD_METERS = 500
 
+# place = "District 2 ,Tehran County, Tehran Province, Iran"
 place = "Mehestan, Alborz Province, Iran"
 G = ox.graph_from_place(place, network_type="walk")
 GC = ox.graph_from_place(place, network_type="drive")
@@ -85,15 +86,21 @@ def is_unique(new_loc, existing_people):
 
 
 def get_offset_patterns(ofst):
+    def rand_sign():
+        return random.choice([-1, 1])
+
+    def rand_val():
+        return rand_sign() * random.uniform(0.0008, ofst)
+
     offset_patterns = [
-        [-ofst, ofst, -ofst, ofst],
-        [ofst, ofst, ofst, ofst],
-        [-ofst, -ofst, -ofst, -ofst],
-        [ofst, -ofst, ofst, -ofst],
-        [0, ofst, 0, ofst],
-        [ofst, 0, ofst, 0],
-        [-ofst, 0, -ofst, 0],
-        [0, -ofst, 0, -ofst],
+        [rand_val(), rand_val(), rand_val(), rand_val()],
+        [rand_val(), rand_val(), rand_val(), rand_val()],
+        [rand_val(), rand_val(), rand_val(), rand_val()],
+        [rand_val(), rand_val(), rand_val(), rand_val()],
+        [rand_val(), rand_val(), rand_val(), rand_val()],
+        [rand_val(), rand_val(), rand_val(), rand_val()],
+        [rand_val(), rand_val(), rand_val(), rand_val()],
+        [rand_val(), rand_val(), rand_val(), rand_val()],
     ]
     return offset_patterns
 
@@ -103,7 +110,7 @@ def start_simulation(num):
         cnt = 0
         global ofstv, SIMULATION_RUNNING, prev_locations, all_persons
         increaseby = 0.0001
-        pnum = 5
+        pnum = 3
 
         while SIMULATION_RUNNING:
             if not user_locations:

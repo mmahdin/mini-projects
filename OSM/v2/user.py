@@ -35,6 +35,7 @@ server_socket = sio_client.Client()
 server_socket.connect("http://localhost:5001")
 
 place = "Mehestan, Alborz Province, Iran"
+# place = "District 2 ,Tehran County, Tehran Province, Iran"
 G = ox.graph_from_place(place, network_type="walk")
 
 
@@ -216,9 +217,9 @@ def handle_submit_entry(data):
         data['time']
     ]
     csv_path = os.path.join(os.path.dirname(__file__), 'schedule_data.csv')
-    with open(csv_path, mode='a', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(row)
+    # with open(csv_path, mode='a', newline='', encoding='utf-8') as file:
+    #     writer = csv.writer(file)
+    #     writer.writerow(row)
 
 
 if __name__ == '__main__':
