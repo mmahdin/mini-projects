@@ -1,0 +1,17 @@
+Ride Sharing Project:
+https://github.com/Nivethashan/Ride-Sharing?utm_source=chatgpt.com
+
+
+Ride-Sharing:
+https://github.com/sbajaj7/Ride-Sharing
+
+
+
+
+
+keywords:
+shareability network
+spatio-temporal
+batch-based ride-sharing: Instead of processing each ride request immediately, the system waits briefly and groups multiple requests that arrive around the same time.
+voronoi
+GraphHopper

@@ -62,43 +62,6 @@ def click_mask(page, mask_path):
         return False
 
 
-def save_loggin(mask_paths, url):
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        context = browser.new_context()
-        page = context.new_page()
-        page.goto(url)
-        time.sleep(1)
-
-        # clicking on input field
-        mask = mask_paths[0]
-        found = click_mask(page, mask)
-        if not found:
-            print(f"Failed to find {mask}")
-        time.sleep(1)
-
-        # Entering the number
-        number = '09188869828'
-        page.keyboard.type(number)
-        print(f"Typed phone number: {number}")
-        time.sleep(2)
-
-        # clicking on confirm button
-        mask = mask_paths[1]
-        found = click_mask(page, mask)
-        if not found:
-            print(f"Failed to find {mask}")
-        time.sleep(6)
-
-        # clicking on the code filed
-        mask = mask_paths[2]
-        found = click_mask(page, mask)
-        if not found:
-            print(f"Failed to find {mask}")
-        time.sleep(20)
-        context.storage_state(path='loggin/auth.json')
-
-
 def run_with_login(data):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
@@ -208,16 +171,11 @@ def run_with_login(data):
         time.sleep(20)
 
 
-if __name__ == "__main__":
-    # Replace with your real mask image paths
-    masks = ["masks/input.png", "masks/confirm_number.png", "masks/code.png"]
-    # save_loggin(masks, "https://app.snapp.taxi/login")
+data = {
+    'origin': '35.9680991, 50.7372719',
+    'destination': '35.9730182, 50.7326614',
+    'name': 'محمدجعفری',
+    'number': '09188861828'
+}
 
-    data = {
-        'origin': '35.9680991, 50.7372719',
-        'destination': '35.9730182, 50.7326614',
-        'name': 'محمدجعفری',
-        'number': '09188861828'
-    }
-
-    run_with_login(data)
+run_with_login(data)
