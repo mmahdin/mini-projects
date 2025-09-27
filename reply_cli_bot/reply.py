@@ -26,7 +26,7 @@ class Config:
         self.chat_data_file = "result.json"
 
         # Feature-specific configs
-        self.trigger_words = ["مهدی"]
+        self.trigger_words = ["مهدی", "مهد‌ی", 'مهد‌‌‌‌ی', 'مهد‌‌‌‌‌ی']
         self.trigger_responses = ["بله👻"]
         self.stats_word = "آمار"
         self.audio_command = "آهنگ"
@@ -439,13 +439,18 @@ class AudioCroppingFeature(Feature):
             end_ms = min(end_seconds * 1000, len(audio))
 
             cropped_audio = audio[start_ms:end_ms]
-            cropped_audio.export(output_path, format="ogg", codec="libvorbis")
+            cropped_audio.export(
+                output_path,
+                format="ogg",
+                codec="libopus",   # must be libopus, not libvorbis
+                # optional: set bitrate for better quality
+                parameters=["-b:a", "64k"]
+            )
 
             # Send cropped audio
             await client.send_file(
                 event.chat_id,
                 output_path,
-                caption=f"🎵 برش آهنگ از {start_time} تا {end_time}",
                 voice_note=True,
                 reply_to=replied_msg.id
             )
@@ -863,8 +868,11 @@ class TelegramBot:
             chat = await event.get_chat()
             sender = await event.get_sender()
 
-            # Only process messages from target group
-            if not (hasattr(chat, "title") and chat.title.lower() == self.config.group_name.lower()):
+            # Get your own user information
+            me = await self.client.get_me()
+
+            # Only process messages sent by you (the bot owner)
+            if event.sender_id != me.id:
                 return
 
             message_text = event.raw_text.strip()
@@ -926,3 +934,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
